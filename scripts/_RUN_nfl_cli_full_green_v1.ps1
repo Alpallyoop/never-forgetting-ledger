@@ -80,7 +80,7 @@ function AssertSuccess([string]$Name,$Result,[string]$Needle){
 }
 
 $RepoRoot = (Resolve-Path -LiteralPath $RepoRoot).Path
-$PSExe = (Get-Command powershell.exe -ErrorAction Stop).Source
+$PSExe = (Get-Process -Id $PID).Path
 
 $CliPath      = Join-Path $RepoRoot "scripts\nfl_cli_v1.ps1"
 $ExportPath   = Join-Path $RepoRoot "scripts\nfl_export_ledger_packet_v1.ps1"
@@ -90,7 +90,10 @@ $IngestPath   = Join-Path $RepoRoot "scripts\nfl_ingest_inboxes_v1.ps1"
 $ApiPath      = Join-Path $RepoRoot "scripts\nfl_api_v1.ps1"
 $ConfigPath   = Join-Path $RepoRoot "config\inbox_registry.json"
 $KeyPath      = Join-Path $RepoRoot "proofs\keys\id_ed25519"
-$CprVerifier  = "C:\dev\cpr\scripts\verify_packet_v1.ps1"
+. (Join-Path $PSScriptRoot "_nfl_paths_v1.ps1")
+$CprRoot      = Resolve-NflCprRoot $RepoRoot ""
+if($null -eq $CprRoot){ Fail "CPR_ROOT_NOT_FOUND (set NFL_CPR_ROOT)" }
+$CprVerifier  = Join-Path $CprRoot "scripts\verify_packet_v1.ps1"
 
 foreach($p in @($CliPath,$ExportPath,$SignPath,$WitnessPath,$IngestPath,$ApiPath,$ConfigPath,$CprVerifier)){
   if(-not (Test-Path -LiteralPath $p)){
@@ -117,7 +120,8 @@ Get-ChildItem -LiteralPath $Outbox -Force -ErrorAction SilentlyContinue | Remove
 # -------------------------------------------------------------------
 # 1) CLI smoke: commit + lookup + verify
 # -------------------------------------------------------------------
-$SmokeHash = ("smoke-" + $RunId).ToLowerInvariant()
+# SHA-256 of "nfl.cli.full_green.smoke:<run id>" (the ledger takes hex digests only).
+$SmokeHash = (Get-FileHash -InputStream ([System.IO.MemoryStream]::new([System.Text.Encoding]::UTF8.GetBytes("nfl.cli.full_green.smoke:" + $RunId))) -Algorithm SHA256).Hash.ToLowerInvariant()
 
 $r1 = StartChild $PSExe ('-NoProfile -NonInteractive -ExecutionPolicy Bypass -File "{0}" commit -Hash "{1}" -Artifact "{2}"' -f $CliPath,$SmokeHash,("full-green-" + $RunId)) $RepoRoot
 WriteUtf8NoBomLfText (Join-Path $RunRoot "01_commit.stdout.txt") $r1.StdOut
@@ -129,7 +133,7 @@ WriteUtf8NoBomLfText (Join-Path $RunRoot "02_lookup.stdout.txt") $r2.StdOut
 WriteUtf8NoBomLfText (Join-Path $RunRoot "02_lookup.stderr.txt") $r2.StdErr
 AssertSuccess "CLI_LOOKUP" $r2 "FOUND"
 
-$r3 = StartChild $PSExe ('-NoProfile -NonInteractive -ExecutionPolicy Bypass -File "{0}" verify -File "{1}"' -f $CliPath,"C:\Windows\notepad.exe") $RepoRoot
+$r3 = StartChild $PSExe ('-NoProfile -NonInteractive -ExecutionPolicy Bypass -File "{0}" verify -File "{1}"' -f $CliPath,$CliPath) $RepoRoot
 WriteUtf8NoBomLfText (Join-Path $RunRoot "03_verify.stdout.txt") $r3.StdOut
 WriteUtf8NoBomLfText (Join-Path $RunRoot "03_verify.stderr.txt") $r3.StdErr
 if($r3.ExitCode -ne 0){ Fail ("CLI_VERIFY_EXIT_" + $r3.ExitCode) }
@@ -186,7 +190,7 @@ foreach($p in @($SigFile,$PubCopy,$Allowed,$Envelope)){
 # -------------------------------------------------------------------
 # 4) CPR verify
 # -------------------------------------------------------------------
-$r6 = StartChild $PSExe ('-NoProfile -NonInteractive -ExecutionPolicy Bypass -File "{0}" -RepoRoot "C:\dev\cpr" -PacketPath "{1}"' -f $CprVerifier,$PacketDir) $RepoRoot
+$r6 = StartChild $PSExe ('-NoProfile -NonInteractive -ExecutionPolicy Bypass -File "{0}" -RepoRoot "{2}" -PacketPath "{1}"' -f $CprVerifier,$PacketDir,$CprRoot) $RepoRoot
 WriteUtf8NoBomLfText (Join-Path $RunRoot "06_cpr_verify.stdout.txt") $r6.StdOut
 WriteUtf8NoBomLfText (Join-Path $RunRoot "06_cpr_verify.stderr.txt") $r6.StdErr
 AssertSuccess "CPR_VERIFY" $r6 "CPR_VERIFY_OK"
@@ -231,7 +235,7 @@ $receipt = [ordered]@{
   run_root = $RunRoot
 }
 
-Add-Content -LiteralPath $ReceiptPath -Value (($receipt | ConvertTo-Json -Compress -Depth 20) + "`n") -Encoding UTF8
+[System.IO.File]::AppendAllText($ReceiptPath, (($receipt | ConvertTo-Json -Compress -Depth 20) + "`n"), (New-Object System.Text.UTF8Encoding($false)))
 
 Write-Output "NFL_CLI_FULL_GREEN_OK"
 Write-Output ("RUN_ID=" + $RunId)

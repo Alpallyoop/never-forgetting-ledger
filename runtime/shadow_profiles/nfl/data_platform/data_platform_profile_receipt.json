@@ -1,0 +1,11 @@
+{
+    "schema":  "contract_registry.data_platform_profile_receipt.v1",
+    "utc":  "2026-10-13T05:37:03.0265326Z",
+    "repo_name":  "nfl",
+    "profile":  "C:\\dev\\nfl\\runtime\\shadow_profiles\\nfl\\data_platform\\data_platform_profile.json",
+    "profile_sha256":  "2586c84194fbda9fbb5617b238f47f143048c3ad6192e5f08d140dee4aa401fb",
+    "report":  "C:\\dev\\nfl\\runtime\\shadow_profiles\\nfl\\data_platform\\data_platform_profile_report.md",
+    "detection_count":  592,
+    "files_scanned":  2033,
+    "scan_truncated":  false
+}

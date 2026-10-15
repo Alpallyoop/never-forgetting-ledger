@@ -1,0 +1,27 @@
+PIE REPO SCAN DIFF
+project=nfl
+repo=C:\dev\nfl
+scan=20260507_211954_012
+
+ADDED CUsersalecm\.nfl-keytest\nfl_keytest_f0f81dc2af76411ba9227446f2181550\allowed_signers
+ADDED CUsersalecm\.nfl-keytest\nfl_keytest_f0f81dc2af76411ba9227446f2181550\key
+ADDED CUsersalecm\.nfl-keytest\nfl_keytest_f0f81dc2af76411ba9227446f2181550\key.pub
+ADDED CUsersalecm\.nfl-keytest\nfl_keytest_f0f81dc2af76411ba9227446f2181550\payload.txt
+ADDED CUsersalecm\.nfl-keytest\nfl_keytest_f0f81dc2af76411ba9227446f2181550\revoked_keys
+CHANGED proofs\receipts\nfl_ingest_runs.ndjson
+CHANGED runtime\ingest\last_run.json
+ADDED CUsersalecm\.nfl-keytest\nfl_keytest_a0358ca389404f678b91c2f12006d9c9\allowed_signers
+ADDED CUsersalecm\.nfl-keytest\nfl_keytest_a0358ca389404f678b91c2f12006d9c9\key
+ADDED CUsersalecm\.nfl-keytest\nfl_keytest_a0358ca389404f678b91c2f12006d9c9\key.pub
+ADDED CUsersalecm\.nfl-keytest\nfl_keytest_a0358ca389404f678b91c2f12006d9c9\payload.txt
+ADDED CUsersalecm\.nfl-keytest\nfl_keytest_a0358ca389404f678b91c2f12006d9c9\revoked_keys
+REMOVED Cï€ºïœUsersïœalecm\.nfl-keytest\nfl_keytest_f0f81dc2af76411ba9227446f2181550\allowed_signers
+REMOVED Cï€ºïœUsersïœalecm\.nfl-keytest\nfl_keytest_f0f81dc2af76411ba9227446f2181550\key
+REMOVED Cï€ºïœUsersïœalecm\.nfl-keytest\nfl_keytest_f0f81dc2af76411ba9227446f2181550\key.pub
+REMOVED Cï€ºïœUsersïœalecm\.nfl-keytest\nfl_keytest_f0f81dc2af76411ba9227446f2181550\payload.txt
+REMOVED Cï€ºïœUsersïœalecm\.nfl-keytest\nfl_keytest_f0f81dc2af76411ba9227446f2181550\revoked_keys
+REMOVED ïœCï€ºïœUsersïœalecm\.nfl-keytest\nfl_keytest_a0358ca389404f678b91c2f12006d9c9\allowed_signers
+REMOVED ïœCï€ºïœUsersïœalecm\.nfl-keytest\nfl_keytest_a0358ca389404f678b91c2f12006d9c9\key
+REMOVED ïœCï€ºïœUsersïœalecm\.nfl-keytest\nfl_keytest_a0358ca389404f678b91c2f12006d9c9\key.pub
+REMOVED ïœCï€ºïœUsersïœalecm\.nfl-keytest\nfl_keytest_a0358ca389404f678b91c2f12006d9c9\payload.txt
+REMOVED ïœCï€ºïœUsersïœalecm\.nfl-keytest\nfl_keytest_a0358ca389404f678b91c2f12006d9c9\revoked_keys

@@ -1,0 +1,12 @@
+{
+    "schema":  "contract_registry.ai_use_profile_receipt.v1",
+    "utc":  "2026-10-13T05:37:12.2264069Z",
+    "repo_name":  "nfl",
+    "profile":  "C:\\dev\\nfl\\runtime\\shadow_profiles\\nfl\\ai_use\\ai_use_profile.json",
+    "profile_sha256":  "90cc7790a020e30c847c70c09b1c10254bd607ed7642b40a568d3d0c67fd0224",
+    "report":  "C:\\dev\\nfl\\runtime\\shadow_profiles\\nfl\\ai_use\\ai_use_profile_report.md",
+    "ai_use_level":  "agent_assisted",
+    "detection_count":  3,
+    "files_scanned":  2033,
+    "scan_truncated":  false
+}

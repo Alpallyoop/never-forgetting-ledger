@@ -4,7 +4,7 @@ param(
   [Parameter(Mandatory=$true)]
   [string]$PacketPath,
   [Parameter(Mandatory=$false)]
-  [string]$CprRepoRoot = "C:\dev\cpr"
+  [string]$CprRepoRoot = $env:NFL_CPR_ROOT
 )
 
 Set-StrictMode -Version Latest

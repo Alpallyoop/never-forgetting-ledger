@@ -10,7 +10,7 @@ Set-StrictMode -Version Latest
 . (Join-Path $PSScriptRoot "_lib_neverlost_v1.ps1")
 function Invoke-SshKeygen([string[]]$Argv,[int]$TimeoutSeconds){
   if ($TimeoutSeconds -lt 1) { throw "TimeoutSeconds must be >= 1" }
-  $ssh = (Get-Command ssh-keygen.exe -ErrorAction Stop).Source
+  $ssh = (Get-Command @("ssh-keygen.exe","ssh-keygen") -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1).Source; if(-not $ssh){ throw "SSH_KEYGEN_NOT_FOUND" }
 
   $quoted = New-Object System.Collections.Generic.List[string]
   foreach ($a in @(@($Argv))) {

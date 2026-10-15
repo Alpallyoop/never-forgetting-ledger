@@ -1,5 +1,5 @@
 param(
-  [Parameter(Mandatory=$false)][string]$RepoRoot = "C:\dev\nfl"
+  [Parameter(Mandatory=$false)][string]$RepoRoot = (Split-Path -Parent $PSScriptRoot)
 )
 $ErrorActionPreference="Stop"
 Set-StrictMode -Version Latest

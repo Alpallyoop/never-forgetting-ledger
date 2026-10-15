@@ -1,0 +1,45 @@
+{
+    "schema":  "contract_registry.ai_use_profile.v1",
+    "generated_utc":  "2026-10-13T05:37:12.2009632Z",
+    "repo_name":  "nfl",
+    "target_repo":  "C:\\dev\\nfl",
+    "files_scanned":  2033,
+    "scan_truncated":  false,
+    "ai_use_level":  "agent_assisted",
+    "ai_signals":  [
+                       "agent_instructions",
+                       "claude",
+                       "claude_instructions"
+                   ],
+    "category_summary":  [
+                             {
+                                 "category":  "agent_config",
+                                 "detections":  2
+                             },
+                             {
+                                 "category":  "model_reference",
+                                 "detections":  1
+                             }
+                         ],
+    "detection_count":  3,
+    "detections":  [
+                       {
+                           "category":  "agent_config",
+                           "signal":  "agent_instructions",
+                           "path":  "AGENTS.md",
+                           "detail":  "AGENTS.md"
+                       },
+                       {
+                           "category":  "agent_config",
+                           "signal":  "claude_instructions",
+                           "path":  "CLAUDE.md",
+                           "detail":  "CLAUDE.md"
+                       },
+                       {
+                           "category":  "model_reference",
+                           "signal":  "claude",
+                           "path":  "scripts\\_RUN_nfl_apply_all_v1.ps1",
+                           "detail":  "claude-"
+                       }
+                   ]
+}

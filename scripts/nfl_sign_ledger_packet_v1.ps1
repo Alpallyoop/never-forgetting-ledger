@@ -56,7 +56,7 @@ if(-not (Test-Path -LiteralPath $SumsPath -PathType Leaf)){ Fail "SHA256SUMS_MIS
 if(-not (Test-Path -LiteralPath $SigningKeyPath -PathType Leaf)){ Fail "SIGNING_KEY_MISSING" }
 if(-not (Test-Path -LiteralPath $PubKeyPath -PathType Leaf)){ Fail "PUBKEY_MISSING" }
 
-$ssh = Get-Command ssh-keygen.exe -ErrorAction SilentlyContinue
+$ssh = Get-Command @("ssh-keygen.exe","ssh-keygen") -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
 if($null -eq $ssh){ Fail "SSH_KEYGEN_MISSING" }
 
 EnsureDir $SigDir

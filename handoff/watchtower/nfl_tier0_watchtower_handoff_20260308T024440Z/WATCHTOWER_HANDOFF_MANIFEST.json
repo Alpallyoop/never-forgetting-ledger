@@ -1,0 +1,21 @@
+{
+    "schema":  "watchtower.handoff.manifest.v1",
+    "created_utc":  "20260308T024440Z",
+    "source_repo":  "C:\\dev\\nfl",
+    "source_instrument":  "NFL",
+    "source_role":  "witness-only",
+    "frozen_bundle":  "C:\\dev\\nfl\\test_vectors\\tier0_frozen\\nfl_tier0_green_20260307",
+    "release_tag":  "nfl-tier0-release-hygiene-20260307",
+    "included_scripts":  [
+                             "scripts/verify_packet_v1.ps1",
+                             "scripts/selftest_verify_packet_v1.ps1",
+                             "scripts/selftest_vectors_v1.ps1",
+                             "scripts/_selftest_nfl_tier0_locked_v1.ps1"
+                         ],
+    "included_docs":  [
+                          "docs/NFL_TIER0_LOCK.md",
+                          "docs/NFL_CANONICAL_STATUS.md",
+                          "docs/NFL_TIER0_RELEASE_NOTE.md"
+                      ],
+    "purpose":  "WatchTower consume/verify alignment against locked NFL Tier-0 evidence"
+}

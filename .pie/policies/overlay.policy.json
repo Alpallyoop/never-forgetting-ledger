@@ -1,0 +1,33 @@
+{
+    "schema":  "pie.policy.overlay.v1",
+    "project":  "nfl",
+    "scope":  "repo",
+    "target_repo":  "C:\\dev\\nfl",
+    "rules":  [
+                  {
+                      "event":  "repo_scan",
+                      "decision":  "ALLOW",
+                      "reason_code":  "REPO_SCAN_ALLOWED"
+                  },
+                  {
+                      "event":  "repo_write",
+                      "decision":  "ASK_CONFIRMATION",
+                      "reason_code":  "REPO_WRITE_REQUIRES_CONFIRMATION"
+                  },
+                  {
+                      "event":  "external_sync",
+                      "decision":  "ASK_CONFIRMATION",
+                      "reason_code":  "EXTERNAL_SYNC_REQUIRES_CONFIRMATION"
+                  },
+                  {
+                      "event":  "dangerous_command",
+                      "decision":  "DENY",
+                      "reason_code":  "DANGEROUS_COMMAND_BLOCKED"
+                  },
+                  {
+                      "event":  "ai_execute_code",
+                      "decision":  "DENY",
+                      "reason_code":  "AI_ASSISTANT_NOT_EXECUTOR"
+                  }
+              ]
+}

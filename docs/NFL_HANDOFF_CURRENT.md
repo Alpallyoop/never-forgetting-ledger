@@ -1,144 +1,41 @@
-# NFL — Current Canonical Handoff (reconciled)
+# NFL - current handoff
 
-**Repository:** `C:\dev\nfl`
-**Reconciled:** 2026-08-21
-**Supersedes:** the earlier "~78% / WBS-6 next" Tier-0 handoff, which described the
-project *before* the CPR migration and is now historically inaccurate.
+**Reconciled:** 2026-10-15 (supersedes the 2026-08-21 handoff; the 2026-10-07 audit is `NFL_AUDIT_20261007.md`).
+**Repository:** `<dev root>/_Covenant-systems/nfl` (S: family layout, proposal 0009). GitHub:
+`Alpallyoop/never-forgetting-ledger`.
 
----
+## 1. What NFL is
 
-## 1. What NFL is today
+The ecosystem's append-only hash ledger and witness. Commit a hash once, verify it forever. CPR judges packets,
+NeverLost decides trust, Arbiter / Covenant Gate decide policy; NFL records what it was shown and what those
+authorities said, and can prove it later (self-chain, checkpoints, signed seals, portable signed exports).
 
-NFL (Never Forgetting Ledger) is a **witness / integrity ledger** with an
-operational CLI + local HTTP API. Its core promise is unchanged: hash something,
-commit it once, verify it forever — append-only, non-mutating, deterministic.
-
-What changed since the old handoff: **packet-law verification was moved out of NFL
-into a separate instrument, CPR** (`C:\dev\cpr`). NFL no longer owns the Packet
-Constitution verifier; it *witnesses* CPR's verdicts and records them. NFL's own
-former packet-law entrypoints are now intentional quarantine stubs that raise
-`NFL_PACKET_LAW_MOVED_TO_CPR`.
-
-So the accurate one-line role is:
-
-> NFL is the append-only witness ledger and operational surface (CLI/API/ingest).
-> CPR is the packet-law authority. NeverLost (future) is the trust authority.
-
----
-
-## 2. Timeline reconciliation (why the old doc is stale)
-
-1. Tier-0 verifier + negative taxonomy were proven GREEN and **frozen on 2026-03-07**
-   (`test_vectors/tier0_frozen/nfl_tier0_green_20260307`, tags `nfl-tier0-green-20260307`,
-   `nfl-tier0-release-hygiene-20260307`). This is the milestone the old handoff's WBS-6
-   was pointing at — it is **done and frozen**.
-2. **After** the freeze, packet-law verification was delegated to CPR
-   (commits `cddbe00`, `545fe46`, `446a652`). The local Tier-0 verifier scripts
-   (`verify_packet_v1.ps1`, `_selftest_nfl_tier0_locked_v1.ps1`, `scan_inbox.ps1`,
-   `nfl_verify_ledger_packet_v1.ps1`, `verify_covenant_packet_v1.ps1`) became
-   `throw "NFL_PACKET_LAW_MOVED_TO_CPR"` stubs.
-3. A **CLI + operational layer** was built on top: `nfl_cli_v1.ps1`, ledger
-   export/sign, CPR witness wrapper, inbox ingest, an ingest scheduled task, and a
-   local HTTP API (`nfl_api_v1.ps1`) with project-aware ledger commits.
-
-The Tier-0 lock docs and (until this pass) the README still described the
-pre-migration surface. That is the stale-doc gap this reconciliation closes.
-
----
-
-## 3. Canonical repository surface (after 2026-08-21 hygiene pass)
-
-`scripts/` was reduced from 219 files to ~38 canonical files. ~220 development
-artifacts (one-shot `_PATCH_*` / `_RUN_*` / `_AUDIT_*` scripts, `*.bak_*` backups,
-dated `_bk_neverlost_*` dirs, and accidental `C:\Users\alecm\` path-bug dirs) were
-archived to the gitignored `_to_delete/` folder pending manual deletion.
-
-**Operational (witness / ledger / API / CLI):**
-- `scripts/nfl_cli_v1.ps1` — `commit` / `lookup` / `verify`; failures as `NFL_CLI_FAIL:*`
-- `scripts/nfl_api_v1.ps1` — local HTTP API: `POST /commit`, `GET /lookup?hash=`, `POST /verify`
-- `scripts/nfl_witness_cpr_verify_v1.ps1` — witness wrapper over the CPR verifier
-- `scripts/nfl_export_ledger_packet_v1.ps1` / `nfl_sign_ledger_packet_v1.ps1` — export + sign ledger packets
-- `scripts/nfl_ingest_inboxes_v1.ps1` / `nfl_ingest_control_v1.ps1` / `nfl_install_ingest_task_v1.ps1` — idempotent inbox ingest + scheduled task
-- `scripts/nfl_ops_launch_v1.ps1`, `scripts/nfl.ps1` — operator entrypoints
-
-**Tier-0 frozen evidence surface (historical, keep):**
-- `scripts/selftest_vectors_v1.ps1`, `scripts/selftest_verify_packet_v1.ps1`,
-  `scripts/_selftest_nfl_tier0_v2.ps1`, and `test_vectors/tier0_frozen/`
-
-**Quarantine stubs (intentional):** `verify_packet_v1.ps1`, `verify_covenant_packet_v1.ps1`,
-`_selftest_nfl_tier0_v1.ps1`, `_selftest_nfl_tier0_locked_v1.ps1`,
-`nfl_verify_ledger_packet_v1.ps1`, `scan_inbox.ps1` → all raise `NFL_PACKET_LAW_MOVED_TO_CPR`.
-
-**Future-trust scaffolding (kept, not yet wired):** `_bootstrap_neverlost_v1_nfl*.ps1`,
-`_lib_neverlost_v1.ps1`.
-
----
-
-## 4. The ledger and its receipts
-
-- Authoritative ledger: `data/ledger.ndjson` — append-only, one record per commit:
-  `{"hash","artifact","timestamp"}`. Untracked in git (the ledger is on-disk data,
-  not source), consistent with append-only durability living on disk.
-- CLI result tokens: `COMMIT_OK`, `FOUND`, `NOT_FOUND`, `VERIFIED`.
-- Frozen Tier-0 evidence bundles under `proofs/receipts/<timestamp>/` (stdout/stderr,
-  `nfl.tier0.selftest.v1.ndjson`, `sha256sums.txt`) — tracked, immutable evidence.
-- Runtime telemetry logs under `proofs/receipts/*.ndjson` (e.g. `nfl_ingest_runs.ndjson`,
-  `nfl.cpr_verify_witness.ndjson`) — high-churn operational output.
-
-**Known operational issue (flagged this pass):** `nfl_ingest_runs.ndjson` had grown to
-~310,000 lines / ~28.8 MB because an installed ingest scheduled task fires every few
-minutes and appends a run receipt each time (run history spans 2026-04-15 → present).
-This telemetry log should not be git-tracked; it is being untracked + gitignored
-(the file itself is left intact on disk — append-only is preserved). The scheduled
-task's cadence is worth reviewing separately.
-
----
-
-## 5. Boundaries (unchanged constitution, current owners)
-
-| Concern | Owner |
-|---|---|
-| Packet-law / Option-A verification | **CPR** (`C:\dev\cpr`) |
-| Trust authority (which key/principal is authorized) | **NeverLost** (future integration) |
-| Policy / permit decisions | Covenant Gate / Arbiter |
-| Witnessing, append-only receipts, ledger | **NFL** |
-| Commit/lookup/verify operational surface | **NFL** |
-
-NFL witnesses evidence; it does not manufacture truth, decide trust, or enforce policy.
-
----
-
-## 6. Accurate WBS status
+## 2. State
 
 | Area | Status |
 |---|---|
-| Tier-0 verifier + negative taxonomy | ✅ frozen 2026-03-07 (now delegated to CPR) |
-| CPR delegation of packet-law | ✅ done |
-| Ledger CLI (commit/lookup/verify) | ✅ locked |
-| Local HTTP API | ✅ present (restored this pass; had been accidentally deleted uncommitted) |
-| Ledger export + sign | ✅ present |
-| Inbox ingest + scheduled task | ✅ present (telemetry log needs untracking) |
-| Repo hygiene | ✅ done this pass (219→38 canonical scripts) |
-| Docs reconciled to reality | ✅ this pass (README + this handoff + ecosystem classification) |
-| NeverLost trust integration | ⬜ scaffolding only; not wired |
-| Durable ledger hardening (hash-chain / checkpoints / export verify) | ⬜ not started |
-| Quarantine lane for invalid ingest | ⬜ partial (`packets/quarantine/` exists) |
+| Ledger core: one writer for CLI, API, ingest, `nfl.ps1` (`_lib_nfl_v1.ps1`) | done 2026-10-15: exclusive lock, self-chain `seq`/`prev`, write verified before `COMMIT_OK`, hex-digest and label validation |
+| Host independence | done 2026-10-15: identical hashes on PowerShell 5.1 and 7 (PowerShell 7's `ConvertFrom-Json` turned timestamps into dates and broke chain and checkpoint verification on 7; the Windows-made checkpoint now verifies on Linux) |
+| HTTP API `nfl.api.v1` | done: `/lookup` and `/verify` added (README promised them, code lacked them), commit goes through the shared writer, Host + Origin guards, 1 MiB body cap |
+| Integration receipts (proposal 0001) | done: witness / verify / attribution / NFL's own `nfl>cpr` and `nfl>neverlost` receipts |
+| Contracts | `schemas/nfl.ingest.v1`, `nfl.receipt.v1`, `nfl.ledger.record.v1`, `nfl.inbox_registry.v1` |
+| Ingest | rewritten: relative inbox paths (the `C:/dev/...` paths broke at the S: move; ingest had been scanning nothing since 2026-10-13), no folders created in other repositories, attribution, `nfl.ingest.v1` envelopes -> `nfl.receipt.v1`, verified packet ids committed, dedup that a bad copy cannot poison, CPR missing = `pending` and retried |
+| Durable ledger (checkpoint / seal / export / trust bundle + root of trust) | done 2026-08/10, unchanged in behaviour |
+| Tests | `_RUN_nfl_selftests_v1.ps1`: parse gate 23, self-chain 4/4, checkpoint 5/5, seal 9/9, API 18/18, receipts + ingest 29/29, export 9/9, real ledger chain; all green on Linux / PowerShell 7.4.6 on 2026-10-15 |
+| Quarantine lane for invalid ingest | not built: failed items are recorded (`ok:false`, token) and never reach the ledger, but are not moved |
 
----
+## 3. Needs the home computer (Windows)
 
-## 7. Real next steps (in order)
+1. Run `NFL_Apply_All.cmd`: proves everything with the real CPR on Windows PowerShell 5.1, re-registers the
+   ingest task, commits and tags the baseline. Nothing from this pass is committed yet.
+2. First ingest run after this change re-checks the 29 packets in `packets/inbox` (old dedup keys were absolute
+   `C:\dev` paths) and commits their verified packet ids once as `packet:local:nfl-packets-inbox`.
+3. `proofs/keys/id_ed25519` is a private key on disk (gitignored, never tracked). It is the dev signing key; a
+   NeverLost-issued key should replace it (NeverLost owns keys).
 
-1. **Commit the reconciliation baseline** (README fix, hygiene deletions, ingest-log
-   untrack, refreshed docs, restored API script).
-2. **Review the ingest scheduled task** cadence; rotate/cap `nfl_ingest_runs.ndjson`.
-3. **NeverLost trust integration** — replace self-asserted signer trust with an
-   authorized-signer resolution (`trust_bundle.json`), with negative tests for
-   unknown principal / untrusted key / wrong namespace / revoked signer. Scaffolding
-   already exists in `_bootstrap_neverlost_v1_nfl*.ps1` / `_lib_neverlost_v1.ps1`.
-4. **Durable ledger hardening** — receipt IDs, canonical serialization, hash-chaining
-   or checkpoint roots, checkpoint sealing, export + independent export verification.
-5. **Quarantine lane** — deterministic rejection receipts for invalid ingest that never
-   enter the valid ledger lane.
+## 4. Open items owned elsewhere
 
-Do not start SaaS / licensing / UI work before the standalone instrument (items 3–5)
-is independently sealed.
+See `docs/proposals/0002-registry-alignment-for-constellation.md`: registry / integration-document mismatches,
+contracts attributed to NFL that NFL does not define (`nfl.settings.v1`, `nfl.receipt.ingested.v1`), the
+`nfl.ingest.v1.packet_id` vs Packet Constitution conflict, publishing `integrations.json` into `.constellation/`,
+and CPR's verifier failing on Linux.

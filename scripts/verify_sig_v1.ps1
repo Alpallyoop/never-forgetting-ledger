@@ -19,7 +19,7 @@ function Quote-Arg([string]$x){
 }
 function Invoke-OpenSshKeygenPSI([string[]]$Argv,[int]$TimeoutSeconds){
   if ($TimeoutSeconds -lt 1) { Die "TimeoutSeconds must be >= 1" }
-  $ssh = (Get-Command ssh-keygen.exe -ErrorAction Stop).Source
+  $ssh = (Get-Command @("ssh-keygen.exe","ssh-keygen") -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1).Source; if(-not $ssh){ throw "SSH_KEYGEN_NOT_FOUND" }
   $parts = New-Object System.Collections.Generic.List[string]
   foreach($a in @(@($Argv))){ [void]$parts.Add((Quote-Arg $a)) }
   $argStr = ($parts.ToArray() -join " ")
@@ -55,7 +55,7 @@ if ([string]::IsNullOrWhiteSpace($Principal)) { Die "Principal empty" }
 if (-not (Test-Path -LiteralPath $File -PathType Leaf)) { Die ("Missing file: " + $File) }
 if (-not (Test-Path -LiteralPath $Sig  -PathType Leaf)) { Die ("Missing sig: " + $Sig) }
 
-$tmpRev = Join-Path ([System.IO.Path]::GetTempPath()) ("nfl_revocations_empty_" + [Guid]::NewGuid().ToString("N") + ".txt")
+if(-not (Test-Path -LiteralPath (Join-Path $root "proofs\_tmp"))){ New-Item -ItemType Directory -Force -Path (Join-Path $root "proofs\_tmp") | Out-Null }; $tmpRev = Join-Path (Join-Path $root "proofs\_tmp") ("nfl_revocations_empty_" + [Guid]::NewGuid().ToString("N") + ".txt")
 "" | Set-Content -LiteralPath $tmpRev -Encoding UTF8
 
 try {

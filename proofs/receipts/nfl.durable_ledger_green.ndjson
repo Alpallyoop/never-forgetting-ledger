@@ -1,0 +1,4 @@
+{"schema":"nfl.durable_ledger_green.receipt.v1","utc":"2026-08-25T14:40:02Z","ok":true,"stages":["CKPT_SELFTEST","SEAL_SELFTEST","CHECKPOINT","VERIFY","SEAL","VERIFY_SEAL"]}
+{"schema":"nfl.durable_ledger_green.receipt.v1","utc":"2026-10-07T14:19:05Z","ok":true,"stages":["CKPT_SELFTEST","SEAL_SELFTEST","CHECKPOINT","VERIFY","SEAL","VERIFY_SEAL"]}
+{"schema":"nfl.durable_ledger_green.receipt.v1","utc":"2026-10-08T13:13:26Z","ok":true,"stages":["CKPT_SELFTEST","SEAL_SELFTEST","CHECKPOINT","VERIFY","SEAL","VERIFY_SEAL"]}
+{"schema":"nfl.durable_ledger_green.receipt.v1","utc":"2026-10-08T16:50:54Z","ok":true,"stages":["CKPT_SELFTEST","SEAL_SELFTEST","CHECKPOINT","VERIFY","SEAL","VERIFY_SEAL"]}

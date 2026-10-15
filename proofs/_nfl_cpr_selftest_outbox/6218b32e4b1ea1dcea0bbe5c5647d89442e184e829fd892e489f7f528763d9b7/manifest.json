@@ -1,0 +1,1 @@
+{"schema":"cpr.packet.manifest.v1","constitution":"packet_constitution_v1_option_a","payload":{"root":"payload","files":[{"path":"payload/hello.txt","size":17,"sha256":"632dc9c8f89f2b2fc0882c49a94a7c79c6f579e413a27207c780db7ddcb6c406"}]}}

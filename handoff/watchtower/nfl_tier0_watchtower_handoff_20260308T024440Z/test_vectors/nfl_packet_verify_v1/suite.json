@@ -1,0 +1,51 @@
+{
+    "packet_id":  "0537effea5f535d061b313f72e37ca52d4a34fff00865066c51fa7dff410618a",
+    "positive":  {
+                     "packet_root":  "C:\\dev\\nfl\\test_vectors\\nfl_packet_verify_v1\\positive\\packet_0537effea5f535d061b313f72e37ca52d4a34fff00865066c51fa7dff410618a",
+                     "sig_namespace":  "covenant-nfl"
+                 },
+    "negatives":  [
+                      {
+                          "name":  "tamper_payload",
+                          "packet_root":  "C:\\dev\\nfl\\test_vectors\\nfl_packet_verify_v1\\negative\\tamper_payload_0537effea5f535d061b313f72e37ca52d4a34fff00865066c51fa7dff410618a",
+                          "sig_namespace":  "covenant-nfl",
+                          "expect":  "SHA256_MISMATCH"
+                      },
+                      {
+                          "name":  "missing_sig",
+                          "packet_root":  "C:\\dev\\nfl\\test_vectors\\nfl_packet_verify_v1\\negative\\missing_sig_0537effea5f535d061b313f72e37ca52d4a34fff00865066c51fa7dff410618a",
+                          "sig_namespace":  "covenant-nfl",
+                          "expect":  "MISSING_SIG"
+                      },
+                      {
+                          "name":  "wrong_namespace",
+                          "packet_root":  "C:\\dev\\nfl\\test_vectors\\nfl_packet_verify_v1\\negative\\wrong_namespace_0537effea5f535d061b313f72e37ca52d4a34fff00865066c51fa7dff410618a",
+                          "sig_namespace":  "covenant-nfl-BAD",
+                          "expect":  "SIG_VERIFY_FAIL"
+                      },
+                      {
+                          "name":  "missing_sha256sums",
+                          "packet_root":  "C:\\dev\\nfl\\test_vectors\\nfl_packet_verify_v1\\negative\\missing_sha256sums_0537effea5f535d061b313f72e37ca52d4a34fff00865066c51fa7dff410618a",
+                          "sig_namespace":  "covenant-nfl",
+                          "expect":  "MISSING_SHA256SUMS"
+                      },
+                      {
+                          "name":  "bad_sha256sum_line",
+                          "packet_root":  "C:\\dev\\nfl\\test_vectors\\nfl_packet_verify_v1\\negative\\bad_sha256sum_line_0537effea5f535d061b313f72e37ca52d4a34fff00865066c51fa7dff410618a",
+                          "sig_namespace":  "covenant-nfl",
+                          "expect":  "BAD_SHA256SUM_LINE"
+                      },
+                      {
+                          "name":  "traversal_path",
+                          "packet_root":  "C:\\dev\\nfl\\test_vectors\\nfl_packet_verify_v1\\negative\\traversal_path_0537effea5f535d061b313f72e37ca52d4a34fff00865066c51fa7dff410618a",
+                          "sig_namespace":  "covenant-nfl",
+                          "expect":  "TRAVERSAL_PATH"
+                      },
+                      {
+                          "name":  "missing_target",
+                          "packet_root":  "C:\\dev\\nfl\\test_vectors\\nfl_packet_verify_v1\\negative\\missing_target_0537effea5f535d061b313f72e37ca52d4a34fff00865066c51fa7dff410618a",
+                          "sig_namespace":  "covenant-nfl",
+                          "expect":  "MISSING_TARGET"
+                      }
+                  ]
+}

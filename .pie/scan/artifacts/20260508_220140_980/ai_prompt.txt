@@ -1,0 +1,998 @@
+You are PIE creating a repo-level intelligence artifact.
+
+Return MARKDOWN ONLY.
+
+Rules:
+- Do not invent files.
+- Do not summarize a single script as if it is the whole repo.
+- Use only the inventory summary, candidate docs, extension counts, and diff provided.
+- Describe what this repository appears to be at a project level.
+- List likely languages/stacks.
+- List important docs found by relative path only.
+- List changes since previous scan.
+- Include "What PIE should remember".
+- Include "Recommended next read targets".
+- State uncertainty clearly.
+- AI is assistant only, not executor.
+
+PROJECT:
+nfl
+
+REPO:
+C:\dev\nfl
+
+INVENTORY FILE COUNT:
+1998
+
+EXTENSION COUNTS:
+.20260209_182029=8
+.20260209_183531=8
+.bak=6
+.bak_20260202_140046=1
+.bak_20260202_141542=1
+.bak_20260202_141546=1
+.bak_20260202_142308=1
+.bak_20260202_145604=1
+.bak_20260202_150440=1
+.bak_20260202_151229=1
+.bak_20260202_170944=1
+.bak_20260202_171003=1
+.bak_20260202_171923=1
+.bak_20260202_181113=1
+.bak_20260202_181120=1
+.bak_20260202_181854=1
+.bak_20260202_211205=1
+.bak_20260202_212429=1
+.bak_20260202_214037=1
+.bak_20260202_220020=1
+.bak_20260202_221647=1
+.bak_20260202_221651=1
+.bak_20260202_224046=1
+.bak_20260202_232230=1
+.bak_20260202_233438=1
+.bak_20260202_233532=1
+.bak_20260202_235105=1
+.bak_20260202_235110=1
+.bak_20260203_005339=1
+.bak_20260203_163651=1
+.bak_20260203_171120=1
+.bak_20260203_183303=1
+.bak_20260203_190511=1
+.bak_20260203_192213=3
+.bak_20260203_194748=3
+.bak_20260203_202312=1
+.bak_20260203_204517=2
+.bak_20260203_204806=2
+.bak_20260203_204932=2
+.bak_20260203_210118=1
+.bak_20260203_215656=2
+.bak_20260203_222904=4
+.bak_20260203_225927=2
+.bak_20260204_221733=1
+.bak_20260204_223957=1
+.bak_20260204_230352=1
+.bak_20260208_100432=2
+.bak_20260208_102458=3
+.bak_20260208_151844=3
+.bak_20260208_154459=3
+.bak_20260208_161258=3
+.bak_20260208_170610=3
+.bak_20260208_174030=2
+.bak_20260208_175345=2
+.bak_20260208_200441=2
+.bak_20260209_102117=2
+.bak_20260209_102147=2
+.bak_20260209_110249=2
+.bak_20260209_124455=2
+.bak_20260209_132123=2
+.bak_20260209_174854=2
+.bak_20260209_180640=2
+.bak_20260209_182030=2
+.bak_20260209_185412=2
+.bak_20260209_192506=2
+.bak_20260209_194834=2
+.bak_20260209_200714=2
+.bak_20260305t235712z=1
+.bak_20260306t013334z=1
+.bak_20260306t021604z=1
+.bak_20260306t025033z=2
+.bak_20260306t225641z=3
+.bak_20260307t011158z=3
+.bak_20260307t015510z=3
+.bak_20260307t031732z=3
+.bak_20260308t004423z=1
+.bak_20260326t220326z=1
+.bin=1
+.bytes=1
+.cmd=3
+.disabled=1
+.env=24
+.example=8
+.gitignore=9
+.gitkeep=1
+.json=222
+.log=56
+.md=64
+.ndjson=50
+.npmrc=40
+.ps=8
+.ps1=769
+.pub=22
+.sig=21
+.sql=160
+.toml=16
+.ts=144
+.tsx=8
+.txt=217
+[no_ext]=10
+
+DIFF:
+PIE REPO SCAN DIFF
+project=nfl
+repo=C:\dev\nfl
+scan=20260508_220140_980
+
+CHANGED proofs\receipts\nfl_ingest_runs.ndjson
+CHANGED runtime\ingest\last_run.json
+
+CANDIDATE DOC CONTENT:
+FILE: docs\packet_constitution_v1\FINALIZATION_LAW_V1.md
+# Finalization Law v1 (Packet Constitution v1)
+
+## Option A (default; REQUIRED unless explicitly opted out)
+- `manifest.json` MUST NOT include `packet_id`
+- `packet_id.txt` contains PacketId
+- `sha256sums.txt` hashes final on-disk bytes of required files
+
+## Mandatory finalization order (no reordering)
+1) Write all payload bytes (`payload/**`)
+2) Write `manifest.json` WITHOUT `packet_id` using canonical JSON bytes
+3) Write detached signatures (`signatures/**`) after payload+manifest exist
+4) Compute `PacketId = SHA-256(canonical_bytes(manifest-without-id))`
+5) Persist PacketId (Option A: `packet_id.txt`; Option B only if hash input remains manifest-without-id)
+6) Generate `sha256sums.txt` LAST over final bytes of required files
+7) Emit receipts LAST referencing PacketId + hashes
+
+## Verification invariants
+- Verifiers MUST NOT mutate packets
+- Repairs are explicit separate artifacts + receipts
+- Verify uses on-disk bytes only; compares sha256sums + PacketId derivation + detached signatures (trust-bundle based)
+
+
+FILE: docs\packet_constitution_v1\PACKET_CONSTITUTION_V1.md
+UNIVERSAL TRANSPORT LAW Ã¢â‚¬â€ PACKET CONSTITUTION v1 (GLOBAL, PROJECT-AGNOSTIC)
+
+SCOPE (GLOBAL):
+This law applies to EVERY project and tool in the ecosystem that produces, moves, ingests, or verifies directory-bundle packets (offline/airgapped or online). No project is exempt.
+
+This law is BELOW application logic (policy, UI, engines) and ABOVE filesystem bytes. It is transport physics.
+
+PURPOSE:
+Eliminate PacketId/manifest/sha256sums drift globally by locking:
+- canonical bytes rules
+- PacketId derivation rule
+- finalization ordering
+- verification non-mutation rule
+- deterministic receipts and test vectors
+
+LOCKED DEFINITIONS:
+- Canonical bytes: exact on-disk bytes used for hashing/verification.
+  - UTF-8 no BOM
+  - LF newlines
+  - canonical JSON serialization (stable ordering; no whitespace; stable escaping)
+- PacketId: content-addressed identifier derived from manifest-without-id canonical bytes:
+  PacketId = SHA-256( canonical_bytes( manifest-without-id ) )
+
+DESIGN CHOICE (LOCK IT):
+Option A (RECOMMENDED; default):
+- manifest.json MUST NOT contain packet_id
+- packet_id.txt contains PacketId
+- sha256sums.txt hashes manifest.json, packet_id.txt, signatures, and all required files
+Option B (allowed but harder):
+- manifest.json MAY contain packet_id
+- PacketId MUST still be derived from canonical bytes of 'manifest-without-id'
+- sha256sums.txt generated only after final manifest is written
+Option A is preferred because it removes 'manifest mutation' as a class of bugs.
+
+LOCKED FINALIZATION PIPELINE (MANDATORY ORDER):
+1) Write ALL payload files first (payload/**).
+2) Write manifest.json WITHOUT packet_id using canonical JSON bytes.
+3) Write detached signatures AFTER payload + manifest exist (signatures/**).
+4) Compute PacketId from canonical bytes of manifest-without-id.
+5) Persist PacketId:
+   - Option A: write packet_id.txt
+   - Option B: embed into manifest (ONLY if hash input remains manifest-without-id bytes)
+6) Generate sha256sums.txt LAST over final on-disk bytes of ALL required files.
+7) Emit receipts LAST, referencing PacketId and hashes (manifest, sha256sums, signatures).
+
+LOCKED VERIFICATION RULES:
+- Verifiers MUST NOT mutate packets (no 'self-healing').
+- Any repair/rewrite is a separate explicit command producing its own repair artifact + receipts.
+- Verification computes hashes from on-disk bytes only and compares to sha256sums + PacketId rule.
+- Signature verification must be deterministic and trust-bundle based.
+
+TEST VECTORS (MANDATORY)
+
+FILE: handoff\watchtower\nfl_tier0_watchtower_handoff_20260308T024440Z\README_HANDOFF.txt
+NFL -> WatchTower handoff bundle
+
+Purpose:
+- consume locked NFL Tier-0 public surface
+- verify WatchTower can read frozen NFL evidence
+- do not modify NFL verifier law
+
+Start from:
+- scripts/_selftest_nfl_tier0_locked_v1.ps1
+- frozen/*
+- test_vectors/nfl_packet_verify_v1/suite.json
+
+Expected next WatchTower work:
+- import this handoff bundle into WatchTower repo
+- write a WatchTower consume script
+- verify WatchTower can parse locked NFL artifacts
+- emit a WatchTower receipt over this handoff
+
+
+FILE: proofs\packet_law_inventory.txt
+NFL PACKET LAW INVENTORY
+RepoRoot: C:\dev\nfl
+
+C:\dev\nfl\scripts\_audit_nfl_inbox_structure_v1.ps1
+  matches: sha256sums, manifest.json, SHA256
+
+C:\dev\nfl\scripts\_bk_neverlost_20260202_210309\_install_neverlost_v1_nfl.ps1
+  matches: SHA256, ConvertFrom-Json, ConvertTo-Json
+
+C:\dev\nfl\scripts\_bk_neverlost_20260202_211209\_install_neverlost_v1_nfl.ps1
+  matches: SHA256, ConvertFrom-Json, ConvertTo-Json
+
+C:\dev\nfl\scripts\_bk_neverlost_20260202_212433\_install_neverlost_v1_nfl.ps1
+  matches: SHA256, ConvertFrom-Json, ConvertTo-Json
+
+C:\dev\nfl\scripts\_bk_neverlost_20260202_212433\_lib_neverlost_v1.ps1
+  matches: SHA256, ConvertFrom-Json, ConvertTo-Json
+
+C:\dev\nfl\scripts\_bk_neverlost_20260202_214041\_install_neverlost_v1_nfl.ps1
+  matches: SHA256, ConvertFrom-Json, ConvertTo-Json
+
+C:\dev\nfl\scripts\_bk_neverlost_20260202_214041\_lib_neverlost_v1.ps1
+  matches: SHA256, ConvertFrom-Json, ConvertTo-Json
+
+C:\dev\nfl\scripts\_bk_neverlost_20260202_214044\_install_neverlost_v1_nfl.ps1
+  matches: SHA256, ConvertFrom-Json, ConvertTo-Json
+
+C:\dev\nfl\scripts\_bk_neverlost_20260202_214044\_lib_neverlost_v1.ps1
+  matches: SHA256, ConvertFrom-Json, ConvertTo-Json
+
+C:\dev\nfl\scripts\_bk_neverlost_20260202_220024\_install_neverlost_v1_nfl.ps1
+  matches: SHA256, ConvertFrom-Json, ConvertTo-Json
+
+C:\dev\nfl\scripts\_bk_neverlost_20260202_220024\_lib_neverlost_v1.ps1
+  matches: SHA256, ConvertFrom-Json, ConvertTo-Json
+
+C:\dev\nfl\scripts\_bk_neverlost_20260202_224050\_install_neverlost_v1_nfl.ps1
+  matches: SHA256, ConvertFrom-Json, ConvertTo-Json
+
+C:\dev\nfl\scripts\_bk_neverlost_20260202_224050\_lib_neverlost_v1.ps1
+  matches: SHA256, ConvertFrom-Json, ConvertTo-Json
+
+C:\dev\nfl\scripts\_bk_neverlost_20260202_232235\_install_neverlost_v1_nfl.ps1
+  matches: SHA256, ConvertFrom-Json, ConvertTo-Json
+
+C:\dev\nfl\scripts\_bk_neverlost_20260202_232235\_lib_neverlost_v1.ps1
+  matches: SHA256, ConvertFrom-Json, ConvertTo-Json
+
+C:\dev\nfl\scripts\_bk_neverlost_20260202_233441\_install_neverlost_v1_nfl.ps1
+  matches: SHA256, ConvertFrom-Json, ConvertTo-Json
+
+C:\dev\nfl\scripts\_bk_neverlost_20260202_233441\_lib_neverlost_v1.ps1
+  matches: SHA256, ConvertFrom-Json, ConvertTo-Json
+
+C:\dev\nfl\scripts\_bk_neverlost_20260202_233536\_install_neverlost_v1_nfl.ps1
+  matches: SHA256, ConvertFrom-Json, ConvertTo-Json
+
+C:\dev\nfl\scripts\_bk_neverlost_20260202_233536\_lib_neverlost_v1.ps1
+  matches: SHA256, ConvertFrom-Json, ConvertTo-Json
+
+C:\dev\nfl\scripts\_bootstrap_neverlost_v1
+
+FILE: README.md
+\# Never Forgetting Ledger (NFL)
+
+
+
+Never Forgetting Ledger (NFL) is a permanent integrity ledger for cryptographic hashes.
+
+
+
+It allows systems and users to:
+
+\- commit a hash once
+
+\- store it with a timestamp
+
+\- look it up or verify it at any time
+
+
+
+NFL ensures that important hashes are never lost and can always be independently verified.
+
+
+
+\---
+
+
+
+\## What NFL Does
+
+
+
+NFL provides three core operations:
+
+
+
+\- \*\*Commit\*\* â†’ store a hash with metadata  
+
+\- \*\*Lookup\*\* â†’ retrieve a previously committed record  
+
+\- \*\*Verify\*\* â†’ hash a file and check if it exists in the ledger  
+
+
+
+Deterministic result tokens:
+
+
+
+```text
+
+COMMIT\_OK
+
+FOUND
+
+NOT\_FOUND
+
+VERIFIED
+
+Quickstart
+
+
+
+Start the API:
+
+
+
+powershell.exe -NoProfile -ExecutionPolicy Bypass `
+
+&#x20; -File scripts\\nfl\_api\_v1.ps1 `
+
+&#x20; -RepoRoot . `
+
+&#x20; -Prefix "http://127.0.0.1:8085/"
+
+
+
+Test lookup:
+
+
+
+Invoke-RestMethod -Method Get `
+
+&#x20; -Uri "http://127.0.0.1:8085/lookup?hash=abc123"
+
+
+
+Full API usage:
+
+
+
+docs/NFL\_API\_QUICKSTART.md
+
+API Overview
+
+Commit
+
+POST /commit
+
+Lookup
+
+GET /lookup?hash=<hash>
+
+Verify
+
+POST /verify
+
+CLI Usage
+
+scripts\\nfl\_cli\_v1.ps1
+
+
+
+Commit:
+
+
+
+.\\scripts\\nfl\_cli\_v1.ps1 commit -Hash "abc123" -Artifact "test"
+
+
+
+Lookup:
+
+
+
+.\\scripts\\nfl\_cli\_v1.ps1 lookup -Hash "abc123"
+
+
+
+Verify:
+
+
+
+.\\scripts\\nfl\_cli\_v1.ps1 verify -File "C:\\Windows\\notepad.exe"
+
+System Role
+
+
+
+NFL is a witness-only system.
+
+
+
+It:
+
+
+
+records hashes
+
+timestamps events
+
+returns deterministic results
+
+
+
+It does not:
+
+
+
+decide trust
+
+enforce policy
+
+define truth
+
+
+
+It only answers:
+
+
+
+"Has this hash been seen before?"
+
+Tier-0 Status
+
+
+
+Tier-0 is complete and frozen.
+
+
+
+Canonical documents
+
+docs/NFL\_TIER0\_LOCK.md
+
+docs/NFL\_CANONICAL\_STATUS.md
+
+Frozen evidence
+
+test\_vectors/tier0\_frozen/nfl\_tier0\_green\_20260307
+
+Canonical tags
+
+nfl-tier0-green-20260307
+
+nfl-tier0-release-hygiene-20260307
+
+Public Surface
+
+scripts/verify\_packet\_v1.ps1
+
+scripts/selftest\_verify\_packet\_v1.ps1
+
+scripts/selftest\_vectors\_v1.ps1
+
+scripts/\_selftest\_nfl\_tier0\_locked\_v1.ps1
+
+scripts/nfl\_cli\_v1.ps1
+
+scripts/nfl\_api\_v1.ps1
+
+Summary
+
+
+
+Never Forgetting Ledger is a simple, durable system:
+
+
+
+hash something
+
+commit it once
+
+verify it forever
+
+
+
+No interpretation.
+
+No mutation.
+
+No forgetting.
+
+
+
+FILE: scripts\_PATCH_fix_packet_constitution_v1_docs_and_vectors_v1.ps1
+param([Parameter(Mandatory=$true)][string]$RepoRoot)
+$ErrorActionPreference="Stop"
+Set-StrictMode -Version Latest
+
+function Die([string]$m){ throw $m }
+function Write-Utf8NoBomLf([string]$Path,[string]$Text){
+  $enc = New-Object System.Text.UTF8Encoding($false)
+  $dir = Split-Path -Parent $Path
+  if ($dir -and -not (Test-Path -LiteralPath $dir -PathType Container)) { New-Item -ItemType Directory -Force -Path $dir | Out-Null }
+  $norm = ($Text -replace "`r`n","`n" -replace "`r","`n")
+  if (-not $norm.EndsWith("`n")) { $norm += "`n" }
+  [System.IO.File]::WriteAllText($Path,$norm,$enc)
+}
+function ParseGatePs1([string]$Path){
+  $tk=$null; $er=$null
+  [void][System.Management.Automation.Language.Parser]::ParseFile($Path,[ref]$tk,[ref]$er)
+  $errs = @(@($er))
+  if ($errs.Count -gt 0) { throw ("PARSE ERROR: " + $errs[0].Message + " (file: " + $Path + ")") }
+}
+
+$Root = (Resolve-Path -LiteralPath $RepoRoot).Path
+$ScriptsDir = Join-Path $Root "scripts"
+$Target = Join-Path $ScriptsDir "_PATCH_packet_constitution_v1_docs_and_vectors.ps1"
+$stamp = (Get-Date).ToString("yyyyMMdd_HHmmss")
+if (Test-Path -LiteralPath $Target -PathType Leaf) {
+  $bak = $Target + ".bak_" + $stamp
+  Copy-Item -LiteralPath $Target -Destination $bak -Force | Out-Null
+  Write-Host ("BACKUP: " + $bak) -ForegroundColor DarkGray
+}
+
+# ---- Write the corrected patch script (NO here-strings) ----
+$S = New-Object System.Collections.Generic.List[string]
+[void]$S.Add("param([Parameter(Mandatory=$true)][string]`$RepoRoot)")
+[void]$S.Add("")
+[void]$S.Add("`$ErrorActionPreference=`"Stop`"")
+[void]$S.Add("Set-StrictMode -Version Latest")
+[void]$S.Add("")
+[void]$S.Add("function Die([string]`$m){ throw `$m }")
+[void]$S.Add("function Write-Utf8NoBomLf([string]`$Path,[string]`$Text){")
+[void]$S.Add("  `$enc = New-Object System.Text.UTF8Encoding(`$false)")
+[void]$S.Add("  `$dir = Split-Path -Parent `$Path")
+[void]$S.Add("  if (`$dir -and -not (Test-Path -LiteralPath `$dir -PathType Container)) { New-Item -ItemType Directory -Force -Path `$dir | Out-Null }")
+[void]$S.Add("  `$norm = (`$Text -replace ``"`r``"`n``,``"`n``" -replace ``"`r``"``,``"`n``"")
+[void]$S.Add("  if (-not `$norm.EndsWith(``"`n``"")) { `$norm += ``"`n``"" }")
+[void]$S.Add("  [System.IO.File]::WriteAllText(`$Path,`$norm,`$enc)")
+[void]$S.Add("}")
+[void]$S.Add("")
+[void]$S.Add("`$Root = (Resolve-Path -LiteralPath `$RepoRoot).Path")
+[void]$S.Add("`$LawDir = Join-Path `$Root ``"docs\packet_constitution_v1``"")
+[void]$S.Add("`$VecDir = Join-Path `$Ro
+
+FILE: scripts\_PATCH_packet_constitution_v1_docs_and_vectors.ps1
+param([Parameter(Mandatory=$true)][string]$RepoRoot)
+$ErrorActionPreference="Stop"
+Set-StrictMode -Version Latest
+
+function Die([string]$m){ throw $m }
+function Write-Utf8NoBomLf([string]$Path,[string]$Text){
+  $enc = New-Object System.Text.UTF8Encoding($false)
+  $dir = Split-Path -Parent $Path
+  if ($dir -and -not (Test-Path -LiteralPath $dir -PathType Container)) { New-Item -ItemType Directory -Force -Path $dir | Out-Null }
+  $norm = ($Text -replace "`r`n","`n" -replace "`r","`n")
+  if (-not $norm.EndsWith("`n")) { $norm += "`n" }
+  [System.IO.File]::WriteAllText($Path,$norm,$enc)
+}
+
+$Root = (Resolve-Path -LiteralPath $RepoRoot).Path
+$LawDir = Join-Path $Root "docs\packet_constitution_v1"
+$VecDir = Join-Path $Root "test_vectors\packet_constitution_v1"
+foreach($d in @($LawDir,$VecDir)){ if (-not (Test-Path -LiteralPath $d -PathType Container)) { New-Item -ItemType Directory -Force -Path $d | Out-Null } }
+
+$LawPath   = Join-Path $LawDir "PACKET_CONSTITUTION_V1.md"
+$FinalPath = Join-Path $LawDir "FINALIZATION_LAW_V1.md"
+$ChkPath   = Join-Path $LawDir "COMPLIANCE_CHECKLIST_V1.md"
+$ReadmeVec = Join-Path $VecDir "README.md"
+
+$nl = "`n"
+$lawLines = @(
+  'UNIVERSAL TRANSPORT LAW â€” PACKET CONSTITUTION v1 (GLOBAL, PROJECT-AGNOSTIC)',
+  '',
+  'SCOPE (GLOBAL):',
+  'This law applies to EVERY project and tool in the ecosystem that produces, moves, ingests, or verifies directory-bundle packets (offline/airgapped or online). No project is exempt.',
+  '',
+  'This law is BELOW application logic (policy, UI, engines) and ABOVE filesystem bytes. It is transport physics.',
+  '',
+  'PURPOSE:',
+  'Eliminate PacketId/manifest/sha256sums drift globally by locking:',
+  '- canonical bytes rules',
+  '- PacketId derivation rule',
+  '- finalization ordering',
+  '- verification non-mutation rule',
+  '- deterministic receipts and test vectors',
+  '',
+  'LOCKED DEFINITIONS:',
+  '- Canonical bytes: exact on-disk bytes used for hashing/verification.',
+  '  - UTF-8 no BOM',
+  '  - LF newlines',
+  '  - canonical JSON serialization (stable ordering; no whitespace; stable escaping)',
+  '- PacketId: content-addressed identifier derived from manifest-without-id canonical bytes:',
+  '  PacketId = SHA-256( canonical_bytes( manifest-without-id ) )',
+  '',
+  'DESIGN CHOICE (LOCK IT):',
+  'Option A (RECOMMENDED; default):',
+  '- manifest.json MUST NOT contain packet_id',
+  '- packet_id.txt contains PacketId',
+  '- sha256sums.txt hashes manifest.json, packet_id.txt, signatures, and all required fil
+
+FILE: scripts\_PATCH_quarantine_legacy_packet_law_to_cpr_v1.ps1
+param([string]$RepoRoot)
+
+Set-StrictMode -Version Latest
+$ErrorActionPreference = "Stop"
+
+$Targets = @(
+  "scripts\verify_packet_v1.ps1",
+  "scripts\nfl_verify_ledger_packet_v1.ps1",
+  "scripts\verify_covenant_packet_v1.ps1",
+  "scripts\scan_inbox.ps1",
+  "scripts\_selftest_nfl_tier0_v1.ps1",
+  "scripts\_selftest_nfl_tier0_locked_v1.ps1"
+)
+
+$Guard = "throw `"NFL_PACKET_LAW_MOVED_TO_CPR`""
+
+$Patched = @()
+
+foreach($Rel in $Targets){
+  $Path = Join-Path $RepoRoot $Rel
+  if(Test-Path $Path){
+    $Orig = Get-Content $Path -Raw
+
+    if($Orig -notmatch "NFL_PACKET_LAW_MOVED_TO_CPR"){
+      $BackupDir = Join-Path $RepoRoot "scripts\_quarantine_legacy_packet_law"
+      if(-not (Test-Path $BackupDir)){ New-Item -ItemType Directory -Path $BackupDir | Out-Null }
+
+      $Backup = Join-Path $BackupDir ($Rel.Replace("\","__") + ".bak")
+      Set-Content $Backup $Orig
+
+      Set-Content $Path $Guard
+    }
+
+    $Patched += $Rel
+  }
+}
+
+$ReceiptPath = Join-Path $RepoRoot "proofs\receipts\nfl.cpr.transition.ndjson"
+$Line = '{"event":"legacy_quarantine","patched_count":' + $Patched.Count + '}'
+
+Add-Content $ReceiptPath $Line
+
+Write-Host "NFL_LEGACY_QUARANTINE_OK"
+
+
+FILE: scripts\_STAMP_packet_constitution_v1_docs_and_vectors_v2.ps1
+param([Parameter(Mandatory=$true)][string]$RepoRoot)
+$ErrorActionPreference="Stop"
+Set-StrictMode -Version Latest
+
+function Write-Utf8NoBomLf([string]$Path,[string]$Text){
+  $enc = New-Object System.Text.UTF8Encoding($false)
+  $dir = Split-Path -Parent $Path
+  if ($dir -and -not (Test-Path -LiteralPath $dir -PathType Container)) { New-Item -ItemType Directory -Force -Path $dir | Out-Null }
+  $norm = ($Text -replace "`r`n","`n" -replace "`r","`n")
+  if (-not $norm.EndsWith("`n")) { $norm += "`n" }
+  [System.IO.File]::WriteAllText($Path,$norm,$enc)
+}
+
+$Root = (Resolve-Path -LiteralPath $RepoRoot).Path
+$LawDir = Join-Path $Root "docs\packet_constitution_v1"
+$VecDir = Join-Path $Root "test_vectors\packet_constitution_v1"
+foreach($d in @($LawDir,$VecDir)){ if (-not (Test-Path -LiteralPath $d -PathType Container)) { New-Item -ItemType Directory -Force -Path $d | Out-Null } }
+
+$LawPath   = Join-Path $LawDir "PACKET_CONSTITUTION_V1.md"
+$FinalPath = Join-Path $LawDir "FINALIZATION_LAW_V1.md"
+$ChkPath   = Join-Path $LawDir "COMPLIANCE_CHECKLIST_V1.md"
+$ReadmeVec = Join-Path $VecDir "README.md"
+
+$lawText = @(
+  'UNIVERSAL TRANSPORT LAW â€” PACKET CONSTITUTION v1 (GLOBAL, PROJECT-AGNOSTIC)',
+  '',
+  'SCOPE (GLOBAL):',
+  'This law applies to EVERY project and tool in the ecosystem that produces, moves, ingests, or verifies directory-bundle packets (offline/airgapped or online). No project is exempt.',
+  '',
+  'This law is BELOW application logic (policy, UI, engines) and ABOVE filesystem bytes. It is transport physics.',
+  '',
+  'PURPOSE:',
+  'Eliminate PacketId/manifest/sha256sums drift globally by locking:',
+  '- canonical bytes rules',
+  '- PacketId derivation rule',
+  '- finalization ordering',
+  '- verification non-mutation rule',
+  '- deterministic receipts and test vectors',
+  '',
+  'LOCKED DEFINITIONS:',
+  '- Canonical bytes: exact on-disk bytes used for hashing/verification.',
+  '  - UTF-8 no BOM',
+  '  - LF newlines',
+  '  - canonical JSON serialization (stable ordering; no whitespace; stable escaping)',
+  '- PacketId: content-addressed identifier derived from manifest-without-id canonical bytes:',
+  '  PacketId = SHA-256( canonical_bytes( manifest-without-id ) )',
+  '',
+  'DESIGN CHOICE (LOCK IT):',
+  'Option A (RECOMMENDED; default):',
+  '- manifest.json MUST NOT contain packet_id',
+  '- packet_id.txt contains PacketId',
+  '- sha256sums.txt hashes manifest.json, packet_id.txt, signatures, and all required files',
+  'Option B (allowed but harder):',
+  '- man
+
+FILE: scripts\inventory_duplicate_packet_law_v1.ps1
+param(
+  [Parameter(Mandatory=$true)]
+  [string]$RepoRoot
+)
+
+Set-StrictMode -Version Latest
+$ErrorActionPreference = "Stop"
+
+if (-not [System.IO.Path]::IsPathRooted($RepoRoot)) {
+  $RepoRoot = Join-Path $PSScriptRoot ".."
+}
+$RepoRoot = [System.IO.Path]::GetFullPath($RepoRoot)
+
+$ReportPath = Join-Path $RepoRoot "proofs\packet_law_inventory.txt"
+$Needles = @(
+  "sha256sums",
+  "packet_id",
+  "manifest.json",
+  "Get-FileHash",
+  "SHA256",
+  "ConvertFrom-Json",
+  "ConvertTo-Json"
+)
+
+$Lines = New-Object System.Collections.Generic.List[string]
+[void]$Lines.Add("NFL PACKET LAW INVENTORY")
+[void]$Lines.Add("RepoRoot: " + $RepoRoot)
+[void]$Lines.Add("")
+
+$Files = Get-ChildItem -LiteralPath (Join-Path $RepoRoot "scripts") -File -Filter *.ps1 -Recurse | Sort-Object FullName
+foreach ($File in $Files) {
+  $Text = [System.IO.File]::ReadAllText($File.FullName)
+  $Matched = New-Object System.Collections.Generic.List[string]
+  foreach ($Needle in $Needles) {
+    if ($Text -match [regex]::Escape($Needle)) {
+      [void]$Matched.Add($Needle)
+    }
+  }
+  if ($Matched.Count -gt 0) {
+    [void]$Lines.Add($File.FullName)
+    [void]$Lines.Add("  matches: " + (($Matched.ToArray()) -join ", "))
+    [void]$Lines.Add("")
+  }
+}
+
+$Enc = New-Object System.Text.UTF8Encoding($false)
+[System.IO.File]::WriteAllText($ReportPath,(($Lines.ToArray()) -join "`n") + "`n",$Enc)
+
+Write-Host ("INVENTORY_REPORT: " + $ReportPath) -ForegroundColor Gray
+Write-Host "NFL_PACKET_LAW_INVENTORY_OK" -ForegroundColor Green
+
+
+FILE: test_vectors\nfl_packet_verify_v1\negative\bad_sha256sum_line_0537effea5f535d061b313f72e37ca52d4a34fff00865066c51fa7dff410618a\payload\repo_snapshot\repo_root\README.md
+UNREADABLE_DOC
+
+FILE: test_vectors\nfl_packet_verify_v1\negative\bad_sha256sum_line_0537effea5f535d061b313f72e37ca52d4a34fff00865066c51fa7dff410618a\payload\repo_snapshot\repo_root\sql\introspection\000_introspect_core_objects.sql
+-- GI/PPI introspection: canonical columns + constraints
+
+select 'governance_policy_versions.columns' as section;
+select column_name, data_type, is_nullable, column_default
+from information_schema.columns
+where table_schema='public' and table_name='governance_policy_versions'
+order by ordinal_position;
+
+select 'governance_policy_rules.columns' as section;
+select column_name, data_type, is_nullable, column_default
+from information_schema.columns
+where table_schema='public' and table_name='governance_policy_rules'
+order by ordinal_position;
+
+select 'governance_evaluations.columns' as section;
+select column_name, data_type, is_nullable, column_default
+from information_schema.columns
+where table_schema='public' and table_name='governance_evaluations'
+order by ordinal_position;
+
+select 'governance_reason_codes.columns' as section;
+select column_name, data_type, is_nullable, column_default
+from information_schema.columns
+where table_schema='public' and table_name='governance_reason_codes'
+order by ordinal_position;
+
+select 'policy_rules.constraints' as section;
+select conname, pg_get_constraintdef(c.oid) as constraint_def
+from pg_constraint c
+join pg_class t on t.oid = c.conrelid
+join pg_namespace n on n.oid = t.relnamespace
+where n.nspname='public' and t.relname='governance_policy_rules'
+order by conname;
+
+select 'graph_edges.constraints' as section;
+select conname, pg_get_constraintdef(c.oid) as constraint_def
+from pg_constraint c
+join pg_class t on t.oid = c.conrelid
+join pg_namespace n on n.oid = t.relnamespace
+where n.nspname='public' and t.relname='governance_policy_rule_graph_edges'
+order by conname;
+
+
+FILE: test_vectors\nfl_packet_verify_v1\negative\bad_sha256sum_line_0537effea5f535d061b313f72e37ca52d4a34fff00865066c51fa7dff410618a\payload\repo_snapshot\repo_root\sql\introspection\000_introspect_gi_ppi_objects.sql
+-- GI/PPI INTROSPECTION â€” CANONICAL
+-- Purpose: pull exact schemas/constraints for audit + debugging
+
+select 'governance_policy_versions' as obj, column_name, data_type, is_nullable, column_default
+from information_schema.columns
+where table_schema='public' and table_name='governance_policy_versions'
+order by ordinal_position;
+
+select 'governance_policy_rules' as obj, column_name, data_type, is_nullable, column_default
+from information_schema.columns
+where table_schema='public' and table_name='governance_policy_rules'
+order by ordinal_position;
+
+select 'governance_evaluations' as obj, column_name, data_type, is_nullable, column_default
+from information_schema.columns
+where table_schema='public' and table_name='governance_evaluations'
+order by ordinal_position;
+
+select conname, pg_get_constraintdef(c.oid) as constraint_def
+from pg_constraint c
+join pg_class t on t.oid = c.conrelid
+join pg_namespace n on n.oid = t.relnamespace
+where n.nspname='public'
+  and t.relname in ('governance_policy_versions','governance_policy_rules','governance_evaluations','governance_policy_rule_graph_nodes','governance_policy_rule_graph_edges')
+order by t.relname, conname;
+
+
+FILE: test_vectors\nfl_packet_verify_v1\negative\bad_sha256sum_line_0537effea5f535d061b313f72e37ca52d4a34fff00865066c51fa7dff410618a\payload\repo_snapshot\repo_root\sql\migrations\040_introspection_views.sql
+-- 040_introspection_views.sql
+-- Read-only introspection views for operators and auditors.
+
+create or replace view public.v_gi_ppi_policies as
+select
+  policy_version_id,
+  version_name,
+  status,
+  created_at,
+  activated_at,
+  policy_hash_sha256,
+  rule_graph_hash_sha256
+from public.governance_policy_versions
+order by created_at desc;
+
+create or replace view public.v_gi_ppi_active_policy as
+select *
+from public.governance_policy_versions
+where status = 'active'
+order by created_at desc
+limit 1;
+
+create or replace view public.v_gi_ppi_rules as
+select
+  r.policy_version_id,
+  r.rule_id,
+  r.rule_order,
+  r.priority,
+  r.decision,
+  r.reason_code,
+  r.match_note,
+  r.match
+from public.governance_policy_rules r;
+
+create or replace view public.v_gi_ppi_reason_codes as
+select code, severity, description
+from public.governance_reason_codes
+order by code asc;
+
+create or replace view public.v_gi_ppi_latest_evaluations as
+select
+  evaluation_id,
+  policy_version_id,
+  policy_hash_sha256,
+  proposal_hash,
+  proposal_hash_jcs_sha256,
+  proposal_hash_pg_sha256,
+  proposal_canon_hash_sha256,
+  decision,
+  reason_codes,
+  created_at
+from public.governance_evaluations
+order by created_at desc;
+
+grant select on public.v_gi_ppi_policies to anon, authenticated;
+grant select on public.v_gi_ppi_active_policy to anon, authenticated;
+grant select on public.v_gi_ppi_rules to anon, authenticated;
+grant select on public.v_gi_ppi_reason_codes to anon, authenticated;
+grant select on public.v_gi_ppi_latest_evaluations to anon, authenticated;
+
+
+FILE: test_vectors\nfl_packet_verify_v1\negative\bad_sha256sum_line_0537effea5f535d061b313f72e37ca52d4a34fff00865066c51fa7dff410618a\payload\repo_snapshot\repo_root\sql\ops\200_org_plan_and_overlay.sql
+-- ============================================================
+-- COVENANT / GI-PPI: ORG PLAN + OVERLAY POLICY (CANONICAL V0)
+-- - plan enforcement
+-- - overlay: append-only versions + hash binding + active pointer
+-- - overlay evaluator: DENY/NO_OP only
+-- - combined eval RPC: canonical eval + overlay diagnostics (immutable)
+-- ============================================================
+
+-- ----------------------------
+-- 1) Plan registry + org plan
+-- ----------------------------
+create table if not exists public.gi_ppi_plan_catalog (
+  plan_code text primary key,
+  description text not null,
+  allow_overlay boolean not null default false,
+  created_at timestamptz not null default now()
+);
+
+insert into public.gi_ppi_plan_catalog (plan_code, description, allow_overlay)
+values
+  ('tier0_instrument', 'Instrument access only (no overlay uploads).', false),
+  ('tier1_curated',    'Instrument + curated overlay governance (DENY/NO_OP only).', true),
+  ('institutional',    'Dedicated institution license. Overlay allowed.', true)
+on conflict (plan_code) do update
+set description = excluded.description,
+    allow_overlay = excluded.allow_overlay;
+
+create table if not exists public.gi_ppi_org_plan (
+  org_id uuid primary key references public.gi_ppi_orgs(org_id) on delete cascade,
+  plan_code text not null references public.gi_ppi_plan_catalog(plan_code),
+  updated_at timestamptz not null default now(),
+  updated_by uuid null
+);
+
+-- RLS
+alter table public.gi_ppi_plan_catalog enable row level security;
+alter table public.gi_ppi_org_plan enable row level security;
+
+-- Public cannot read catalog; authenticated can read catalog if you want (optional).
+drop policy if exists gi_ppi_plan_catalog_no_anon on public.gi_ppi_plan_catalog;
+create policy gi_ppi_plan_catalog_no_anon
+on public.gi_ppi_plan_catalog
+for all
+to anon
+using (false)
+with check (false);
+
+drop policy if exists gi_ppi_plan_catalog_read_auth on public.gi_ppi_plan_catalog;
+create policy gi_ppi_plan_catalog_read_auth
+on public.gi_ppi_plan_catalog
+for select
+to authenticated
+using (true);
+
+-- Org plan: org members can read their org plan; no direct mutations
+drop policy if exists gi_ppi_org_plan_member_read on public.gi_ppi_org_plan;
+create policy gi_ppi_org_plan_member_read
+on public.gi_ppi_org_plan
+for select
+to authenticated
+using (
+  exists (
+    select 1
+    from public.gi_ppi_org_members m
+    where m.org_id = gi_ppi_org_plan.org_id
+      

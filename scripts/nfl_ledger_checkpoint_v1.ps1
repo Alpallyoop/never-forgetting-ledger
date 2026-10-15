@@ -17,7 +17,7 @@
   This script NEVER writes to the ledger. It is append-only for checkpoints.
 
   Chain (self-consistent; independent re-implementation must match canonicalization):
-    canon_i   = ConvertTo-Json(-Compress) of [ordered]{hash,artifact,timestamp}
+    canon_i   = nfl.ledger.core.canon.v1 of {hash,artifact,timestamp} (Get-NflCoreCanon; equals ConvertTo-Json -Compress for all existing records)
     rec_i     = sha256_hex(utf8(canon_i))
     head_0    = sha256_hex(utf8("nfl.ledger.chain.v1" + "\n" + rec_0))
     head_i    = sha256_hex(utf8(head_{i-1} + "\n" + rec_i))
@@ -30,6 +30,7 @@ param(
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
+. (Join-Path $PSScriptRoot "_lib_nfl_v1.ps1")  # host-independent JSON + core canon
 
 $GENESIS = "nfl.ledger.chain.v1"
 
@@ -119,13 +120,10 @@ foreach($ln in $rawLines){
   $t = $ln.Trim()
   if($t.Length -eq 0){ continue }
   $o = $null
-  try { $o = $t | ConvertFrom-Json } catch { Fail ("BAD_JSON_LINE:" + $lineNo) }
-  $canonObj = [ordered]@{
-    hash      = [string](GetProp $o "hash")
-    artifact  = (GetProp $o "artifact")
-    timestamp = [string](GetProp $o "timestamp")
-  }
-  $canon = ($canonObj | ConvertTo-Json -Compress)
+  try { $o = ConvertFrom-NflJson $t } catch { Fail ("BAD_JSON_LINE:" + $lineNo) }
+  # nfl.ledger.core.canon.v1 (see _lib_nfl_v1.ps1): byte-identical to the historical
+  # ConvertTo-Json -Compress output, but the same on Windows PowerShell 5.1 and PowerShell 7.
+  $canon = Get-NflCoreCanon $o
   $recHashes.Add((Sha256HexOfString $canon)) | Out-Null
 }
 
@@ -183,7 +181,7 @@ if($Mode -eq "verify"){
   }
   $ckLines = @((Get-Content -LiteralPath $CkptLog -Encoding UTF8) | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
   if($ckLines.Count -eq 0){ Fail "EMPTY_CHECKPOINT_LOG" }
-  $last = $ckLines[$ckLines.Count-1] | ConvertFrom-Json
+  $last = ConvertFrom-NflJson $ckLines[$ckLines.Count-1]
 
   $ckCount = [int]$last.count
   $ckHead  = [string]$last.head

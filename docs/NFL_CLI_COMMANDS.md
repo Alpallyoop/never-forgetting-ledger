@@ -1,66 +1,23 @@
-# NFL CLI Commands
+# NFL CLI commands
 
-## 1. Commit
-Command:
-powershell.exe -File scripts/nfl_cli_v1.ps1 commit -Hash <hash> -Artifact <artifact>
+`scripts/nfl_cli_v1.ps1 <command> [-RepoRoot <dir>]` (default: current directory). `nfl.cmd` / `scripts/nfl.ps1`
+pass the same commands through with the repository as root.
 
-Success token:
-COMMIT_OK
+| Command | Arguments | Success output | Failure |
+|---|---|---|---|
+| `commit` | `-Hash <hex>` `[-Artifact <label>]` | `COMMIT_OK`, `HASH=`, `TIMESTAMP=`, `SEQ=` | `NFL_CLI_FAIL:MISSING_HASH`, `BAD_HASH`, `ARTIFACT_TOO_LONG`, `ARTIFACT_CONTROL_CHAR`, `LEDGER_LOCK_TIMEOUT` |
+| `lookup` | `-Hash <hex>` | `FOUND`, `HASH=`, `TIMESTAMP=`, `ARTIFACT=`, `SEQ=`, `[MATCHES=]`; or `NOT_FOUND` | `MISSING_HASH` |
+| `verify` | `-File <path>` | `HASH=` then `VERIFIED`, `TIMESTAMP=`, `SEQ=`; or `NOT_FOUND` | `MISSING_FILE`, `FILE_NOT_FOUND:<path>` |
+| `verify-chain` | | `NFL_LEDGER_CHAIN_OK`, `COUNT=`, `UNCHAINED_PREFIX=`, `CHAINED_COUNT=`, `HEAD=` | `NFL_LEDGER_CHAIN_FAIL:CHAIN_BREAK:<i>` / `SEQ_MISMATCH` / `UNCHAINED_AFTER_CHAIN` / `BAD_JSON_LINE` (exit 1) |
+| `witness-receipt` | `-ReceiptFile <ndjson>` or `-ReceiptLine <json>` | per line `WITNESSED` / `ALREADY_WITNESSED` + `RECEIPT_SHA256=`, `INTEGRATION=`, `SEQ=`; then `NFL_RECEIPT_WITNESS_OK` | per line `REFUSED` + `RECEIPT_ERROR=`; then `NFL_CLI_FAIL:RECEIPT_REFUSED:<n>` (exit 1) |
+| `verify-receipt` | `-ReceiptFile` or `-ReceiptLine` | per line `RECEIPT_SHA256=` + `VERIFIED`/`NOT_FOUND`; `NOT_FOUND_COUNT=` | |
+| `witness-own-receipts` | | `WITNESSED=`, `ALREADY=`, `INVALID=`, `NFL_OWN_RECEIPTS_OK` | `NFL_CLI_FAIL:OWN_RECEIPTS_INVALID:<n>` |
 
-## 2. Lookup
-Command:
-powershell.exe -File scripts/nfl_cli_v1.ps1 lookup -Hash <hash>
+Receipt refusal tokens: `RECEIPT_BAD_JSON`, `RECEIPT_NOT_ONE_LINE`, `RECEIPT_KEYS_NOT_CANONICAL`,
+`RECEIPT_NOT_CANONICAL`, `RECEIPT_BAD_SCHEMA`, `RECEIPT_BAD_CONSUMER|PROVIDER|EMITTED_BY|CONTRACT|REQUEST_SHA256|RESPONSE_SHA256|CARRIED|OUTCOME|ERROR_TOKEN|PREV_SHA256`,
+`RECEIPT_ERROR_TOKEN_ON_OK`, `RECEIPT_REGISTRY_UNAVAILABLE`, `RECEIPT_UNATTRIBUTED`, `RECEIPT_WITNESS_NOT_NFL`,
+`RECEIPT_EMITTER_MISMATCH`, `RECEIPT_CONTRACT_NOT_REGISTERED`. Receipt files must be UTF-8 without BOM, LF only.
 
-Success token:
-FOUND
-
-## 3. Verify
-Command:
-powershell.exe -File scripts/nfl_cli_v1.ps1 verify -File <path>
-
-Success token:
-VERIFIED
-or
-NOT_FOUND
-
-## 4. Export ledger packet
-Command:
-powershell.exe -File scripts/nfl_export_ledger_packet_v1.ps1 -RepoRoot C:/dev/nfl
-
-Success token:
-NFL_EXPORT_LEDGER_PACKET_OK
-
-## 5. Sign packet
-Command:
-powershell.exe -File scripts/nfl_sign_ledger_packet_v1.ps1 -PacketDir <packetDir> -SigningKeyPath C:/dev/nfl/proofs/keys/id_ed25519 -SignerIdentity nfl.local
-
-Success token:
-NFL_SIGN_PACKET_OK
-
-## 6. CPR witness verify
-Command:
-powershell.exe -File scripts/nfl_witness_cpr_verify_v1.ps1 -RepoRoot C:/dev/nfl -CprVerifierPath C:/dev/cpr/scripts/verify_packet_v1.ps1 -PacketDir <packetDir>
-
-Success token:
-NFL_WITNESS_CPR_VERIFY_OK
-
-## 7. Ingest inboxes
-Command:
-powershell.exe -File scripts/nfl_ingest_inboxes_v1.ps1 -RepoRoot C:/dev/nfl
-
-Success token:
-NFL_INGEST_INBOXES_OK
-
-## 8. Install ingest task
-Command:
-powershell.exe -File scripts/nfl_install_ingest_task_v1.ps1 -RepoRoot C:/dev/nfl
-
-Success token:
-NFL_INSTALL_INGEST_TASK_OK
-
-## 9. Full green runner
-Command:
-powershell.exe -File scripts/_RUN_nfl_cli_full_green_v1.ps1 -RepoRoot C:/dev/nfl
-
-Success token:
-NFL_CLI_FULL_GREEN_OK
+Other operational scripts: `nfl_export_ledger_packet_v1.ps1` / `nfl_sign_ledger_packet_v1.ps1` (ledger packet),
+`nfl_ledger_checkpoint_v1.ps1 -Mode checkpoint|verify`, `nfl_ledger_seal_v1.ps1 -Mode seal|verify-seal`,
+`nfl_ledger_export_v1.ps1` + `verify_nfl_export_v1.py`, `nfl_ingest_inboxes_v1.ps1`, `nfl_ingest_control_v1.ps1`.

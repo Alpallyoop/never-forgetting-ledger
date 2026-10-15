@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "nfl.ingest.v1",
+  "title": "nfl.ingest.v1 - pointer envelope a producer ships to NFL inside a Packet Constitution v1 packet",
+  "description": "Carried as payload/nfl.ingest.json of a packet that CPR verifies (Packet Constitution v1 Option A). NFL commits commit_hash to its ledger under artifact 'nfl.ingest.v1:<producer>:<packet_id>' where packet_id is the CPR-verified id (SHA-256 of manifest.json) and answers with an nfl.receipt.v1. The envelope's own packet_id is the producer's declared id: under Option A the manifest covers this file, so it cannot equal the real packet id; NFL records it as declared_packet_id and never relies on it. NFL never stores the payload; payload_ref is a pointer. Authoritative copy of the schema the producers (runledger, rebound, ...) already carry.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "packet_id",
+    "commit_hash",
+    "producer",
+    "producer_instance",
+    "tenant",
+    "principal",
+    "event_type",
+    "event_time_utc",
+    "prev_links",
+    "payload_mode",
+    "payload_ref",
+    "producer_key_id",
+    "producer_sig_ref"
+  ],
+  "properties": {
+    "schema": {
+      "type": "string",
+      "const": "nfl.ingest.v1"
+    },
+    "packet_id": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$",
+      "description": "Producer-declared packet id (see description). Not verified by NFL."
+    },
+    "commit_hash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "producer": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "description": "Registered service id of the producer; producer>nfl must be a registered integration."
+    },
+    "producer_instance": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "tenant": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "principal": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "event_type": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "event_time_utc": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "prev_links": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-f0-9]{64}$"
+      }
+    },
+    "payload_mode": {
+      "type": "string",
+      "enum": [
+        "pointer_only",
+        "inline_sealed",
+        "inline_plain"
+      ]
+    },
+    "payload_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2048
+    },
+    "producer_key_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "producer_sig_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512
+    }
+  }
+}

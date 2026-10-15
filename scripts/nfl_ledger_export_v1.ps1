@@ -24,6 +24,7 @@ param(
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
+. (Join-Path $PSScriptRoot "_lib_nfl_v1.ps1")  # host-independent JSON + core canon
 
 $GENESIS = "nfl.ledger.export.v1"
 
@@ -61,7 +62,7 @@ if([string]::IsNullOrWhiteSpace($SigningKeyPath)){ $SigningKeyPath = Join-Path $
 if(-not (Test-Path -LiteralPath $SigningKeyPath -PathType Leaf)){ Fail ("SIGNING_KEY_MISSING:" + $SigningKeyPath) }
 $pubPath = $SigningKeyPath + ".pub"
 if(-not (Test-Path -LiteralPath $pubPath -PathType Leaf)){ Fail ("PUBKEY_MISSING:" + $pubPath) }
-$ssh = Get-Command ssh-keygen.exe -ErrorAction SilentlyContinue
+$ssh = Get-Command @("ssh-keygen.exe","ssh-keygen") -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
 if($null -eq $ssh){ Fail "SSH_KEYGEN_MISSING" }
 
 # ---- read ledger, build canonical records + chain -------------------
@@ -77,7 +78,7 @@ foreach($ln in ($norm -split "`n")){
   $t = $ln.Trim()
   if($t.Length -eq 0){ continue }
   $o = $null
-  try { $o = $t | ConvertFrom-Json } catch { Fail "BAD_JSON_LINE" }
+  try { $o = ConvertFrom-NflJson $t } catch { Fail "BAD_JSON_LINE" }
   $h = [string](GetProp $o "hash")
   $aRaw = (GetProp $o "artifact")
   $a = if($null -eq $aRaw){ "" } else { [string]$aRaw }

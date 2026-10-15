@@ -1,0 +1,18 @@
+## Project Overview
+
+Never Forgetting Ledger (NFL) is a permanent integrity ledger for cryptographic hashes, providing core operations like commit, lookup, and verify. It ensures that important hashes are never lost and can always be independently verified.
+
+### Technologies/Stacks
+- **PowerShell**: Used for API implementation and CLI interactions.
+- **SQL**: Utilized for database operations to store and manage hash data.
+- **JSON**: Used for configuration files and status updates.
+
+### Important Documents
+- `docs/NFL_API_QUICKSTART.md`: Provides a quick guide on how to use the NFL API.
+- `scripts/fl_cli_v1.ps1`: Command-line interface script for interacting with NFL.
+- `scripts/fl_api_v1.ps1`: PowerShell script implementing the NFL API.
+- `README.md`: Project overview and usage instructions.
+
+### Changes Since Previous Scan
+- Updated proofs and runtime ingestion files (`fl_ingest_runs.ndjson` and `last_run.json`).
+- Various documentation and patch scripts were updated to fix or enhance content.

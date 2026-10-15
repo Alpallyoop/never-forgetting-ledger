@@ -10,7 +10,7 @@ $ScriptsDir = Join-Path $root "scripts"
 $mk = Join-Path $ScriptsDir "make_allowed_signers_v1.ps1"
 if (Test-Path -LiteralPath $mk -PathType Leaf) {
   Write-Output "RUN: make_allowed_signers_v1.ps1"
-  & (Get-Command powershell.exe -ErrorAction Stop).Source -NoProfile -ExecutionPolicy Bypass -File $mk -Root $root | Out-Null
+  & (Get-Process -Id $PID).Path -NoProfile -ExecutionPolicy Bypass -File $mk -Root $root | Out-Null
 } else {
   Write-Output "SKIP: make_allowed_signers_v1.ps1 not present"
 }
@@ -26,9 +26,9 @@ if (-not (Test-Path -LiteralPath $sign -PathType Leaf)) { Die ("Missing sign scr
 if (-not (Test-Path -LiteralPath $ver  -PathType Leaf)) { Die ("Missing verify script: " + $ver) }
 
 Write-Output "RUN: sign_file_v1.ps1"
-& (Get-Command powershell.exe -ErrorAction Stop).Source -NoProfile -ExecutionPolicy Bypass -File $sign -RepoRoot $root -Namespace $ns -File $payload -OutSig $sig | Out-Null
+& (Get-Process -Id $PID).Path -NoProfile -ExecutionPolicy Bypass -File $sign -RepoRoot $root -Namespace $ns -File $payload -OutSig $sig | Out-Null
 
 Write-Output "RUN: verify_sig_v1.ps1"
-& (Get-Command powershell.exe -ErrorAction Stop).Source -NoProfile -ExecutionPolicy Bypass -File $ver -RepoRoot $root -Namespace $ns -File $payload -Sig $sig | Out-Null
+& (Get-Process -Id $PID).Path -NoProfile -ExecutionPolicy Bypass -File $ver -RepoRoot $root -Namespace $ns -File $payload -Sig $sig | Out-Null
 
 Write-Output "PASS: NFL SIGN/VERIFY SELFTEST v1"

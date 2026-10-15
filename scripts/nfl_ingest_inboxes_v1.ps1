@@ -1,348 +1,301 @@
+<#
+  nfl_ingest_inboxes_v1.ps1 -- idempotent inbox ingest (config/inbox_registry.json, nfl.inbox_registry.v1).
+
+  Every item is attributed before anything is committed (proposal 0001):
+    source "local"                -> NFL's own operator inbox
+    integration "<c>><p>"         -> must be a registered integration (.constellation/SERVICE_MAP.md)
+    payload/nfl.ingest.json       -> the envelope's producer; producer>nfl must be registered with nfl.ingest.v1
+  Items that belong to nothing are not committed: they are counted and listed as NFL_INGEST_UNATTRIBUTED.
+
+  mode packet  : CPR verifies the packet (nfl_witness_cpr_verify_v1.ps1). Then
+                   with payload/nfl.ingest.json -> validate nfl.ingest.v1, commit commit_hash as
+                     "nfl.ingest.v1:<producer>:<packet_id>" (packet_id = the CPR-verified id; the envelope's
+                     own packet_id is recorded as declared_packet_id), issue nfl.receipt.v1
+                   without an envelope          -> commit the packet_id as "packet:<source>:<inbox>"
+  mode file    : commit the SHA-256 of every file as "file:<inbox>:<relative/path>"
+  mode receipt : witness every constellation.integration.receipt.v1 line of every *.ndjson file
+  Finally the receipts NFL wrote as a consumer (nfl>cpr, nfl>neverlost) are witnessed.
+
+  NFL never creates a directory outside its own repository: a missing foreign inbox is "unavailable".
+  Without the CPR verifier, packet items stay pending ("unavailable") and are retried next run.
+  Telemetry: proofs/receipts/nfl_ingest_state.ndjson (dedup + per-item result), nfl_ingest_runs.ndjson,
+  runtime/ingest/last_run.json.
+#>
 param(
-  [Parameter(Mandatory=$true)][string]$RepoRoot
+  [Parameter(Mandatory=$true)][string]$RepoRoot,
+  [string]$CprRoot = "",
+  [string]$ConfigPath = ""
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
+. (Join-Path $PSScriptRoot "_lib_nfl_v1.ps1")
+. (Join-Path $PSScriptRoot "_nfl_paths_v1.ps1")
 
-function Fail([string]$m) {
-  throw ("NFL_INGEST_FAIL:" + $m)
+function Fail([string]$m){ throw ("NFL_INGEST_FAIL:" + $m) }
+
+function Append-JsonLine([string]$Path,$Obj){
+  [System.IO.File]::AppendAllText($Path, ((ConvertTo-NflCanonicalJson $Obj) + "`n"), (Get-NflUtf8))
 }
 
-function Ensure-Dir([string]$p) {
-  if ([string]::IsNullOrWhiteSpace($p)) { return }
-  if (-not (Test-Path -LiteralPath $p -PathType Container)) {
-    New-Item -ItemType Directory -Force -Path $p | Out-Null
-  }
-}
-
-function New-Utf8NoBom() {
-  return New-Object System.Text.UTF8Encoding($false)
-}
-
-function Normalize-Lf([string]$t) {
-  if ($null -eq $t) { return "" }
-  $u = ($t -replace "`r`n", "`n") -replace "`r", "`n"
-  if (-not $u.EndsWith("`n")) { $u += "`n" }
-  return $u
-}
-
-function Read-Utf8([string]$Path) {
-  if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) {
-    Fail ("READ_MISSING:" + $Path)
-  }
-  return [System.IO.File]::ReadAllText($Path, (New-Utf8NoBom))
-}
-
-function Write-Utf8NoBomLf([string]$Path, [string]$Text) {
-  $dir = Split-Path -Parent $Path
-  if ($dir) { Ensure-Dir $dir }
-  $u = Normalize-Lf $Text
-  [System.IO.File]::WriteAllBytes($Path, (New-Utf8NoBom).GetBytes($u))
-}
-
-function Append-JsonLine([string]$Path, $Obj) {
-  # Clean single-line NDJSON append (LF only, no blank line between records).
-  $line = (($Obj | ConvertTo-Json -Compress -Depth 20) + "`n")
-  [System.IO.File]::AppendAllText($Path, $line, (New-Utf8NoBom))
-}
-
-function Rotate-IfLarge([string]$Path, [long]$MaxBytes) {
-  # Bound unbounded telemetry growth: archive the file once it exceeds MaxBytes,
-  # then let it be recreated fresh on the next append. Retains history (append-only)
-  # under an archive/ subfolder. Never call this on functional state (dedup) files.
-  if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) { return }
-  if ((Get-Item -LiteralPath $Path).Length -le $MaxBytes) { return }
-  $archDir = Join-Path (Split-Path -Parent $Path) "archive"
-  Ensure-Dir $archDir
+function Rotate-IfLarge([string]$Path,[long]$MaxBytes){
+  # Telemetry only (never the dedup/state file): archive once over MaxBytes; history is kept.
+  if(-not (Test-Path -LiteralPath $Path -PathType Leaf)){ return }
+  if((Get-Item -LiteralPath $Path).Length -le $MaxBytes){ return }
+  $archDir = Join-NflPath (Split-Path -Parent $Path) "archive"
+  if(-not (Test-Path -LiteralPath $archDir -PathType Container)){ New-Item -ItemType Directory -Force -Path $archDir | Out-Null }
   $stamp = (Get-Date).ToUniversalTime().ToString("yyyyMMddTHHmmssZ")
-  $base  = [System.IO.Path]::GetFileNameWithoutExtension($Path)
-  $ext   = [System.IO.Path]::GetExtension($Path)
-  Move-Item -LiteralPath $Path -Destination (Join-Path $archDir ($base + "_" + $stamp + $ext)) -Force
+  $base = [System.IO.Path]::GetFileNameWithoutExtension($Path)
+  $ext = [System.IO.Path]::GetExtension($Path)
+  Move-Item -LiteralPath $Path -Destination (Join-NflPath $archDir ($base + "_" + $stamp + $ext)) -Force
 }
 
-function Resolve-FullPath([string]$PathValue) {
-  if ([string]::IsNullOrWhiteSpace($PathValue)) {
-    Fail "EMPTY_PATH"
-  }
-  return [System.IO.Path]::GetFullPath($PathValue)
-}
-
-function Get-ProcessKeyPacket([string]$InboxName, [string]$FullPath) {
-  return ("packet|" + $InboxName + "|" + $FullPath.ToLowerInvariant())
-}
-
-function Get-ProcessKeyFile([string]$InboxName, [string]$Hash) {
-  return ("file|" + $InboxName + "|" + $Hash.ToLowerInvariant())
-}
-
-function Get-Sha256HexFile([string]$Path) {
-  if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) {
-    Fail ("HASH_MISSING:" + $Path)
-  }
-  return (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToLowerInvariant()
-}
-
-function Start-Child([string]$FileName, [string]$Arguments, [string]$WorkingDir) {
-  $psi = New-Object System.Diagnostics.ProcessStartInfo
-  $psi.FileName = $FileName
-  $psi.Arguments = $Arguments
-  $psi.WorkingDirectory = $WorkingDir
-  $psi.UseShellExecute = $false
-  $psi.RedirectStandardOutput = $true
-  $psi.RedirectStandardError = $true
-  $psi.CreateNoWindow = $true
-
-  $p = New-Object System.Diagnostics.Process
-  $p.StartInfo = $psi
-  [void]$p.Start()
-
-  $stdout = $p.StandardOutput.ReadToEnd()
-  $stderr = $p.StandardError.ReadToEnd()
-  $p.WaitForExit()
-
-  return [pscustomobject]@{
-    ExitCode = [int]$p.ExitCode
-    StdOut   = $stdout
-    StdErr   = $stderr
-  }
-}
-
-function Load-SeenKeys([string]$StatePath) {
+function Load-SeenKeys([string]$StatePath){
   $set = New-Object 'System.Collections.Generic.HashSet[string]' ([System.StringComparer]::OrdinalIgnoreCase)
-
-  if (-not (Test-Path -LiteralPath $StatePath -PathType Leaf)) {
-    return $set
-  }
-
-  $lines = Get-Content -LiteralPath $StatePath -Encoding UTF8
-  foreach ($line in @(@($lines))) {
-    if ([string]::IsNullOrWhiteSpace($line)) { continue }
-
+  foreach($line in @(Read-NflLedgerLines $StatePath)){
     try {
-      $obj = $line | ConvertFrom-Json -ErrorAction Stop
-      if ($null -ne $obj.process_key) {
-        [void]$set.Add([string]$obj.process_key)
+      $o = ConvertFrom-NflJson $line
+      $k = Get-NflProp $o 'process_key'
+      $final = Get-NflProp $o 'final'
+      # results marked final=$false (e.g. CPR unavailable) are retried
+      if(($null -ne $k) -and ($final -ne $false)){
+        [void]$set.Add([string]$k)
+        $pk = Get-NflProp $o 'path_key'
+        if($null -ne $pk){ [void]$set.Add([string]$pk) }
       }
-    }
-    catch {
-      continue
-    }
+    } catch { continue }
   }
-
-  return $set
+  return ,$set
 }
 
-function Assert-InboxMode([string]$Mode, [string]$InboxName) {
-  if (($Mode -ne "packet") -and ($Mode -ne "file")) {
-    Fail ("BAD_MODE:" + $InboxName + ":" + $Mode)
-  }
+function Test-UnderRoot([string]$Path,[string]$Root){
+  $p = [System.IO.Path]::GetFullPath($Path).TrimEnd([char]'\',[char]'/')
+  $r = [System.IO.Path]::GetFullPath($Root).TrimEnd([char]'\',[char]'/')
+  $cmp = if([System.IO.Path]::DirectorySeparatorChar -eq [char]'\'){ [System.StringComparison]::OrdinalIgnoreCase } else { [System.StringComparison]::Ordinal }
+  return ($p.Equals($r,$cmp) -or $p.StartsWith($r + [System.IO.Path]::DirectorySeparatorChar,$cmp))
 }
 
-function Invoke-PacketIngest(
-  [string]$RepoRoot,
-  [string]$InboxName,
-  [string]$PacketDir,
-  [string]$WitnessPath,
-  [string]$CprVerifier,
-  [string]$PSExe
-) {
-  $args = ('-NoProfile -NonInteractive -ExecutionPolicy Bypass -File "{0}" -RepoRoot "{1}" -CprVerifierPath "{2}" -PacketDir "{3}"' -f $WitnessPath, $RepoRoot, $CprVerifier, $PacketDir)
-  $res = Start-Child -FileName $PSExe -Arguments $args -WorkingDir $RepoRoot
-
-  $ok = ($res.ExitCode -eq 0) -and ($res.StdOut -match 'NFL_WITNESS_CPR_VERIFY_OK')
-
-  return [pscustomobject]@{
-    Ok       = $ok
-    ExitCode = [int]$res.ExitCode
-    StdOut   = $res.StdOut
-    StdErr   = $res.StdErr
-    Mode     = "packet"
-    Inbox    = $InboxName
-    ItemPath = $PacketDir
-  }
-}
-
-function Invoke-FileIngest(
-  [string]$RepoRoot,
-  [string]$InboxName,
-  [string]$FilePath,
-  [string]$CliPath,
-  [string]$PSExe
-) {
-  $hash = Get-Sha256HexFile $FilePath
-  $args = ('-NoProfile -NonInteractive -ExecutionPolicy Bypass -File "{0}" commit -Hash "{1}" -Artifact "{2}"' -f $CliPath, $hash, $FilePath)
-  $res = Start-Child -FileName $PSExe -Arguments $args -WorkingDir $RepoRoot
-
-  $ok = ($res.ExitCode -eq 0) -and ($res.StdOut -match 'COMMIT_OK')
-
-  return [pscustomobject]@{
-    Ok       = $ok
-    ExitCode = [int]$res.ExitCode
-    StdOut   = $res.StdOut
-    StdErr   = $res.StdErr
-    Mode     = "file"
-    Inbox    = $InboxName
-    ItemPath = $FilePath
-    Sha256   = $hash
-  }
+function Get-RelPath([string]$Path,[string]$Base){
+  $p = [System.IO.Path]::GetFullPath($Path); $b = [System.IO.Path]::GetFullPath($Base).TrimEnd([char]'\',[char]'/')
+  return ($p.Substring($b.Length).TrimStart([char]'\',[char]'/') -replace '\\','/')
 }
 
 $RepoRoot = (Resolve-Path -LiteralPath $RepoRoot).Path
+if([string]::IsNullOrWhiteSpace($ConfigPath)){ $ConfigPath = Join-NflPath $RepoRoot "config" "inbox_registry.json" }
+$WitnessPath = Join-NflPath $PSScriptRoot "nfl_witness_cpr_verify_v1.ps1"
+$CprRootResolved = Resolve-NflCprRoot $RepoRoot $CprRoot
+$CprVerifier = if($null -ne $CprRootResolved){ Join-NflPath $CprRootResolved "scripts" "verify_packet_v1.ps1" } else { $null }
 
-$ConfigPath   = Join-Path $RepoRoot "config\inbox_registry.json"
-$CliPath      = Join-Path $RepoRoot "scripts\nfl_cli_v1.ps1"
-$WitnessPath  = Join-Path $RepoRoot "scripts\nfl_witness_cpr_verify_v1.ps1"
-$CprVerifier  = "C:\dev\cpr\scripts\verify_packet_v1.ps1"
-$PSExe        = (Get-Command powershell.exe -ErrorAction Stop).Source
+$ReceiptDir = Join-NflPath $RepoRoot "proofs" "receipts"
+$StatePath = Join-NflPath $ReceiptDir "nfl_ingest_state.ndjson"
+$RunPath = Join-NflPath $ReceiptDir "nfl_ingest_runs.ndjson"
+if(-not (Test-Path -LiteralPath $ReceiptDir -PathType Container)){ New-Item -ItemType Directory -Force -Path $ReceiptDir | Out-Null }
 
-$ReceiptDir   = Join-Path $RepoRoot "proofs\receipts"
-$StatePath    = Join-Path $ReceiptDir "nfl_ingest_state.ndjson"
-$RunPath      = Join-Path $ReceiptDir "nfl_ingest_runs.ndjson"
+if(-not (Test-Path -LiteralPath $ConfigPath -PathType Leaf)){ Fail "INBOX_REGISTRY_MISSING" }
+if(-not (Test-Path -LiteralPath $WitnessPath -PathType Leaf)){ Fail "WITNESS_WRAPPER_MISSING" }
+$config = ConvertFrom-NflJson ([System.IO.File]::ReadAllText($ConfigPath,(Get-NflUtf8)))
+if([string](Get-NflProp $config 'schema') -ne "nfl.inbox_registry.v1"){ Fail "BAD_REGISTRY_SCHEMA" }
+if($null -eq (Get-NflProp $config 'inboxes')){ Fail "INBOXES_MISSING" }
 
-Ensure-Dir $ReceiptDir
-
-if (-not (Test-Path -LiteralPath $ConfigPath -PathType Leaf)) { Fail "INBOX_REGISTRY_MISSING" }
-if (-not (Test-Path -LiteralPath $CliPath -PathType Leaf)) { Fail "NFL_CLI_MISSING" }
-if (-not (Test-Path -LiteralPath $WitnessPath -PathType Leaf)) { Fail "WITNESS_WRAPPER_MISSING" }
-if (-not (Test-Path -LiteralPath $CprVerifier -PathType Leaf)) { Fail "CPR_VERIFIER_MISSING" }
-
-$config = (Read-Utf8 $ConfigPath) | ConvertFrom-Json -ErrorAction Stop
-if ([string]$config.schema -ne "nfl.inbox_registry.v1") { Fail "BAD_REGISTRY_SCHEMA" }
-if ($null -eq $config.inboxes) { Fail "INBOXES_MISSING" }
-
+$Integrations = Get-NflRegisteredIntegrations $RepoRoot
 $Seen = Load-SeenKeys $StatePath
 
 $RunId = (Get-Date).ToUniversalTime().ToString("yyyyMMddTHHmmssZ")
-$Scanned = 0
-$Processed = 0
-$Skipped = 0
-$Failed = 0
+$C = [ordered]@{ scanned=0; processed=0; skipped=0; failed=0; unattributed=0; pending=0 }
+$InboxReport = New-Object System.Collections.Generic.List[object]
+$Unattributed = New-Object System.Collections.Generic.List[string]
 
-foreach ($inbox in @($config.inboxes)) {
-  $name = [string]$inbox.name
-  $path = [string]$inbox.path
-  $mode = [string]$inbox.mode
+function Write-State([string]$Key,[string]$Inbox,[string]$Mode,[string]$Item,[string]$Result,[bool]$Ok,[bool]$Final,[hashtable]$More){
+  $row = [ordered]@{ schema="nfl.ingest.state.v1"; utc=(Get-NflUtc); process_key=$Key; inbox_name=$Inbox; mode=$Mode; item_path=$Item; result=$Result; ok=$Ok; final=$Final }
+  if($null -ne $More){ foreach($k in $More.Keys){ $row[$k] = $More[$k] } }
+  Append-JsonLine $StatePath $row
+  if($Final){ [void]$Seen.Add($Key); if(($null -ne $More) -and $More.ContainsKey('path_key')){ [void]$Seen.Add([string]$More['path_key']) } }
+}
 
-  if ([string]::IsNullOrWhiteSpace($name)) { Fail "INBOX_NAME_MISSING" }
-  if ([string]::IsNullOrWhiteSpace($path)) { Fail ("INBOX_PATH_MISSING:" + $name) }
+$names = @{}
+foreach($inbox in @($config.inboxes)){
+  $name = [string](Get-NflProp $inbox 'name'); $path = [string](Get-NflProp $inbox 'path'); $mode = [string](Get-NflProp $inbox 'mode')
+  $source = [string](Get-NflProp $inbox 'source'); $integ = [string](Get-NflProp $inbox 'integration')
+  if($name -notmatch '^[a-z0-9][a-z0-9-]*$'){ Fail ("BAD_INBOX_NAME:" + $name) }
+  if($names.ContainsKey($name)){ Fail ("DUPLICATE_INBOX:" + $name) }; $names[$name] = $true
+  if([string]::IsNullOrWhiteSpace($path)){ Fail ("INBOX_PATH_MISSING:" + $name) }
+  if(@("packet","file","receipt") -notcontains $mode){ Fail ("BAD_MODE:" + $name + ":" + $mode) }
 
-  Assert-InboxMode -Mode $mode -InboxName $name
+  $full = if([System.IO.Path]::IsPathRooted($path)){ [System.IO.Path]::GetFullPath($path) } else { [System.IO.Path]::GetFullPath((Join-NflPath $RepoRoot $path)) }
+  $isLocal = Test-UnderRoot $full $RepoRoot
 
-  $fullPath = Resolve-FullPath $path
-  Ensure-Dir $fullPath
+  # attribution of the inbox itself
+  $attrib = $null; $attribErr = $null; $nflConsumer = $false
+  if($source -eq "local"){ $attrib = "local" }
+  elseif(-not [string]::IsNullOrWhiteSpace($integ)){
+    $pair = $integ.Split('>')
+    if($null -eq $Integrations){ $attribErr = "REGISTRY_UNAVAILABLE" }
+    elseif($null -eq (Find-NflRegisteredIntegration $Integrations $pair[0] $pair[1])){ $attribErr = "INTEGRATION_NOT_REGISTERED" }
+    else { $attrib = $integ; $nflConsumer = ($pair[0] -eq "nfl") }
+  } else { $attribErr = "NO_SOURCE_OR_INTEGRATION" }
 
-  if ($mode -eq "packet") {
-    $packetDirs = @(Get-ChildItem -LiteralPath $fullPath -Directory -ErrorAction SilentlyContinue | Sort-Object Name)
+  if(-not (Test-Path -LiteralPath $full -PathType Container)){
+    if($isLocal){ New-Item -ItemType Directory -Force -Path $full | Out-Null }
+    else { $InboxReport.Add([ordered]@{ name=$name; mode=$mode; state="unavailable"; attribution=$attrib }); continue }
+  }
+  $inboxState = if($null -ne $attribErr){ "unattributed:" + $attribErr } else { "ok" }
+  $InboxReport.Add([ordered]@{ name=$name; mode=$mode; state=$inboxState; attribution=$attrib })
 
-    foreach ($dir in @(@($packetDirs))) {
-      $Scanned++
-      $processKey = Get-ProcessKeyPacket -InboxName $name -FullPath $dir.FullName
+  if($mode -eq "packet"){
+    foreach($dir in @(Get-ChildItem -LiteralPath $full -Directory -ErrorAction SilentlyContinue | Sort-Object Name)){
+      $C.scanned++
+      $pidFile = Join-NflPath $dir.FullName "packet_id.txt"
+      $packetId = $null
+      if(Test-Path -LiteralPath $pidFile -PathType Leaf){ $t = ([System.IO.File]::ReadAllText($pidFile)).Trim().ToLowerInvariant(); if(Test-NflHex64 $t){ $packetId = $t } }
+      if(($null -eq $packetId) -and (Test-NflHex64 $dir.Name.ToLowerInvariant())){ $packetId = $dir.Name.ToLowerInvariant() }
+      $rel = Get-RelPath $dir.FullName $full
+      # Dedup: a packet id is only trusted once CPR has verified it (success keys on the id); anything
+      # that fails or cannot be attributed keys on its path, so a bad copy can never shadow a good one.
+      $keyPath = "packet|" + $name + "|path:" + $rel
+      $keyId = if($packetId){ "packet|" + $name + "|" + $packetId } else { $null }
+      if($Seen.Contains($keyPath)){ $C.skipped++; continue }
+      $idAlreadyWitnessed = (($null -ne $keyId) -and $Seen.Contains($keyId))
+      $key = $keyPath
 
-      if ($Seen.Contains($processKey)) {
-        $Skipped++
+      $envPath = Join-NflPath $dir.FullName "payload" "nfl.ingest.json"
+      $hasEnv = Test-Path -LiteralPath $envPath -PathType Leaf
+      if((-not $hasEnv) -and ($null -ne $attribErr)){
+        $C.unattributed++; $Unattributed.Add(($name + "/" + $rel))
+        Write-State $key $name "packet" $rel "NFL_INGEST_UNATTRIBUTED" $false $true @{ reason=$attribErr }
+        continue
+      }
+      if($null -eq $CprVerifier){
+        $C.pending++
+        Write-State $key $name "packet" $rel "CPR_UNAVAILABLE" $false $false $null
+        if($nflConsumer){ [void](Write-NflOwnIntegrationReceipt -RepoRoot $RepoRoot -Provider $integ.Split('>')[1] -Outcome "deferred" -ErrorToken "CPR_UNAVAILABLE") }
+        continue
+      }
+      $w = Invoke-NflScript $WitnessPath @("-RepoRoot",$RepoRoot,"-CprVerifierPath",$CprVerifier,"-PacketDir",$dir.FullName) $RepoRoot
+      $cprOk = (($w.ExitCode -eq 0) -and ($w.StdOut -match 'NFL_WITNESS_CPR_VERIFY_OK'))
+      if($nflConsumer){
+        $man = Join-NflPath $dir.FullName "manifest.json"
+        [void](Write-NflOwnIntegrationReceipt -RepoRoot $RepoRoot -Provider $integ.Split('>')[1] -ResponseSha256 $(if(Test-Path -LiteralPath $man -PathType Leaf){ Get-NflSha256File $man } else { $null }) -Outcome $(if($cprOk){ "ok" } else { "refused" }) -ErrorToken "CPR_VERIFY_NOT_GREEN")
+      }
+      if(-not $cprOk){
+        $C.failed++
+        Write-State $key $name "packet" $rel "CPR_VERIFY_NOT_GREEN" $false $true @{ exit_code=$w.ExitCode; stdout=$w.StdOut; stderr=$w.StdErr }
         continue
       }
 
-      $result = Invoke-PacketIngest -RepoRoot $RepoRoot -InboxName $name -PacketDir $dir.FullName -WitnessPath $WitnessPath -CprVerifier $CprVerifier -PSExe $PSExe
+      if($idAlreadyWitnessed){
+        # Same verified packet id seen before under another path: CPR passed, so it is a byte-identical copy.
+        $C.skipped++
+        Write-State $keyPath $name "packet" $rel "DUPLICATE_PACKET" $true $true @{ packet_id=$packetId }
+        continue
+      }
 
-      if ($result.Ok) { $Processed++ } else { $Failed++ }
+      if($hasEnv){
+        $envObj = $null; $err = $null
+        try { $envObj = ConvertFrom-NflJson ([System.IO.File]::ReadAllText($envPath,(Get-NflUtf8))) } catch { $err = "INGEST_ENVELOPE_BAD_JSON" }
+        if($null -eq $err){ $err = Test-NflIngestEnvelope $envObj }
+        if(($null -eq $err) -and ($null -eq $packetId)){ $err = "PACKET_ID_UNREADABLE" }
+        # Under Packet Constitution v1 Option A the packet id is SHA-256 of manifest.json, and the manifest
+        # covers payload/nfl.ingest.json, so the envelope cannot carry the real packet id. NFL keys on the
+        # CPR-verified id and records the producer's declared packet_id beside it (never as proof).
+        if($null -ne $err){
+          $C.failed++
+          Write-State $key $name "packet" $rel $err $false $true $null
+          continue
+        }
+        $reg = Find-NflRegisteredIntegration $Integrations $envObj.producer "nfl"
+        if(($null -eq $Integrations) -or ($null -eq $reg) -or ((@($reg.contracts).Count -gt 0) -and (@($reg.contracts) -notcontains "nfl.ingest.v1"))){
+          $C.unattributed++; $Unattributed.Add(($name + "/" + $rel))
+          Write-State $key $name "packet" $rel "NFL_INGEST_UNATTRIBUTED" $false $true @{ reason=$(if($null -eq $Integrations){ "REGISTRY_UNAVAILABLE" } else { "PRODUCER_NOT_REGISTERED_FOR_NFL_INGEST:" + $envObj.producer }) }
+          continue
+        }
+        $commit = Add-NflLedgerRecord -RepoRoot $RepoRoot -Hash $envObj.commit_hash -Artifact (Get-NflIngestLabel $envObj.producer $packetId) -IdempotentOnHashArtifact
+        $rc = Add-NflIngestReceipt -RepoRoot $RepoRoot -Envelope $envObj -Commit $commit -PacketId $packetId
+        $C.processed++
+        Write-State $keyId $name "packet" $rel "NFL_INGEST_ENVELOPE_WITNESSED" $true $true @{ path_key=$keyPath; packet_id=$packetId; declared_packet_id=$envObj.packet_id; commit_hash=$envObj.commit_hash; producer=$envObj.producer; ledger_seq=$commit.Seq; receipt_id=$rc.Receipt.receipt_id }
+        continue
+      }
 
-      Append-JsonLine $StatePath ([ordered]@{
-        schema      = "nfl.ingest.state.v1"
-        utc         = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
-        process_key = $processKey
-        inbox_name  = $result.Inbox
-        mode        = $result.Mode
-        item_path   = $result.ItemPath
-        ok          = $result.Ok
-        exit_code   = $result.ExitCode
-        stdout      = $result.StdOut
-        stderr      = $result.StdErr
-      })
-
-      [void]$Seen.Add($processKey)
+      if($null -eq $packetId){
+        $C.failed++
+        Write-State $key $name "packet" $rel "PACKET_ID_UNREADABLE" $false $true $null
+        continue
+      }
+      $commit = Add-NflLedgerRecord -RepoRoot $RepoRoot -Hash $packetId -Artifact ("packet:" + $attrib + ":" + $name) -IdempotentOnHashArtifact
+      $C.processed++
+      Write-State $keyId $name "packet" $rel "NFL_INGEST_PACKET_WITNESSED" $true $true @{ path_key=$keyPath; packet_id=$packetId; ledger_seq=$commit.Seq }
     }
   }
 
-  if ($mode -eq "file") {
-    $files = @(Get-ChildItem -LiteralPath $fullPath -File -Recurse -ErrorAction SilentlyContinue | Sort-Object FullName)
-
-    foreach ($file in @(@($files))) {
-      $Scanned++
-      $hash = Get-Sha256HexFile $file.FullName
-      $processKey = Get-ProcessKeyFile -InboxName $name -Hash $hash
-
-      if ($Seen.Contains($processKey)) {
-        $Skipped++
+  if($mode -eq "file"){
+    foreach($file in @(Get-ChildItem -LiteralPath $full -File -Recurse -ErrorAction SilentlyContinue | Sort-Object FullName)){
+      $C.scanned++
+      $hash = Get-NflSha256File $file.FullName
+      $key = "file|" + $name + "|" + $hash
+      if($Seen.Contains($key)){ $C.skipped++; continue }
+      $rel = Get-RelPath $file.FullName $full
+      if($null -ne $attribErr){
+        $C.unattributed++; $Unattributed.Add(($name + "/" + $rel))
+        Write-State $key $name "file" $rel "NFL_INGEST_UNATTRIBUTED" $false $true @{ sha256=$hash; reason=$attribErr }
         continue
       }
+      $label = "file:" + $name + ":" + $rel
+      if($label.Length -gt 1024){ $label = $label.Substring(0,1024) }
+      $commit = Add-NflLedgerRecord -RepoRoot $RepoRoot -Hash $hash -Artifact $label -IdempotentOnHashArtifact
+      $C.processed++
+      Write-State $key $name "file" $rel "COMMIT_OK" $true $true @{ sha256=$hash; ledger_seq=$commit.Seq }
+    }
+  }
 
-      $result = Invoke-FileIngest -RepoRoot $RepoRoot -InboxName $name -FilePath $file.FullName -CliPath $CliPath -PSExe $PSExe
-
-      if ($result.Ok) { $Processed++ } else { $Failed++ }
-
-      Append-JsonLine $StatePath ([ordered]@{
-        schema      = "nfl.ingest.state.v1"
-        utc         = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
-        process_key = $processKey
-        inbox_name  = $result.Inbox
-        mode        = $result.Mode
-        item_path   = $result.ItemPath
-        sha256      = $result.Sha256
-        ok          = $result.Ok
-        exit_code   = $result.ExitCode
-        stdout      = $result.StdOut
-        stderr      = $result.StdErr
-      })
-
-      [void]$Seen.Add($processKey)
+  if($mode -eq "receipt"){
+    foreach($file in @(Get-ChildItem -LiteralPath $full -File -Filter "*.ndjson" -Recurse -ErrorAction SilentlyContinue | Sort-Object FullName)){
+      $C.scanned++
+      $hash = Get-NflSha256File $file.FullName
+      $key = "receipt|" + $name + "|" + $hash
+      if($Seen.Contains($key)){ $C.skipped++; continue }
+      $rel = Get-RelPath $file.FullName $full
+      $text = (Get-NflUtf8).GetString([System.IO.File]::ReadAllBytes($file.FullName))
+      $lines = @($text.Split("`n") | Where-Object { $_.Length -gt 0 })
+      $wit = 0; $ref = 0; $errs = New-Object System.Collections.Generic.List[string]
+      foreach($ln in $lines){
+        $w = Invoke-NflWitnessReceiptLine $RepoRoot $ln $Integrations
+        if($w.Status -eq "REFUSED"){ $ref++; $errs.Add($w.Error) } else { $wit++ }
+      }
+      if($ref -gt 0 -and $wit -eq 0){ $C.failed++ } else { $C.processed++ }
+      if($ref -gt 0){ $C.unattributed += @($errs | Where-Object { $_ -eq "RECEIPT_UNATTRIBUTED" }).Count; if(@($errs | Where-Object { $_ -eq "RECEIPT_UNATTRIBUTED" }).Count -gt 0){ $Unattributed.Add(($name + "/" + $rel)) } }
+      Write-State $key $name "receipt" $rel $(if($ref -eq 0){ "NFL_RECEIPT_WITNESS_OK" } else { "NFL_RECEIPT_REFUSED" }) ($ref -eq 0) $true @{ sha256=$hash; witnessed=$wit; refused=$ref; errors=@($errs | Select-Object -Unique) }
     }
   }
 }
 
-# Bound the run-log telemetry (gitignored) before appending this run's receipt.
-Rotate-IfLarge $RunPath (5MB)
+# Witness the receipts NFL wrote as a consumer during this run (and any earlier unwitnessed ones).
+$own = Sync-NflOwnIntegrationReceipts $RepoRoot
 
+Rotate-IfLarge $RunPath (5MB)
+$ok = ($C.failed -eq 0)
 Append-JsonLine $RunPath ([ordered]@{
-  schema    = "nfl.ingest.run.receipt.v1"
-  utc       = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
-  run_id    = $RunId
-  ok        = ($Failed -eq 0)
-  repo_root = $RepoRoot
-  scanned   = $Scanned
-  processed = $Processed
-  skipped   = $Skipped
-  failed    = $Failed
+  schema="nfl.ingest.run.receipt.v1"; utc=(Get-NflUtc); run_id=$RunId; ok=$ok
+  scanned=$C.scanned; processed=$C.processed; skipped=$C.skipped; failed=$C.failed; unattributed=$C.unattributed; pending=$C.pending
+  own_receipts_witnessed=$own.Witnessed; inboxes=$InboxReport.ToArray()
 })
 
-# Persist last-run state for CLI/UI
-$RuntimeDir = Join-Path $RepoRoot "runtime\ingest"
-Ensure-Dir $RuntimeDir
-
-$LastRunPath = Join-Path $RuntimeDir "last_run.json"
-
+$RuntimeDir = Join-NflPath $RepoRoot "runtime" "ingest"
+if(-not (Test-Path -LiteralPath $RuntimeDir -PathType Container)){ New-Item -ItemType Directory -Force -Path $RuntimeDir | Out-Null }
 $lastRun = [ordered]@{
-  schema    = "nfl.ingest.last_run.v1"
-  run_id    = $RunId
-  utc       = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
-  scanned   = [int]$Scanned
-  processed = [int]$Processed
-  skipped   = [int]$Skipped
-  failed    = [int]$Failed
-  ok        = ($Failed -eq 0)
+  schema="nfl.ingest.last_run.v1"; run_id=$RunId; utc=(Get-NflUtc)
+  scanned=$C.scanned; processed=$C.processed; skipped=$C.skipped; failed=$C.failed; unattributed=$C.unattributed; pending=$C.pending; ok=$ok
+  cpr=$(if($null -ne $CprVerifier){ "present" } else { "unavailable" }); registry=$(if($null -ne $Integrations){ "present" } else { "unavailable" })
+  inboxes=$InboxReport.ToArray()
 }
-
-$lastRunJson = ($lastRun | ConvertTo-Json -Depth 10)
-[System.IO.File]::WriteAllText(
-  $LastRunPath,
-  (Normalize-Lf $lastRunJson),
-  (New-Utf8NoBom)
-)
+[System.IO.File]::WriteAllText((Join-NflPath $RuntimeDir "last_run.json"), ((ConvertTo-NflCanonicalJson $lastRun) + "`n"), (Get-NflUtf8))
 
 Write-Output "NFL_INGEST_INBOXES_OK"
 Write-Output ("RUN_ID=" + $RunId)
-Write-Output ("SCANNED=" + $Scanned)
-Write-Output ("PROCESSED=" + $Processed)
-Write-Output ("SKIPPED=" + $Skipped)
-Write-Output ("FAILED=" + $Failed)
+Write-Output ("SCANNED=" + $C.scanned)
+Write-Output ("PROCESSED=" + $C.processed)
+Write-Output ("SKIPPED=" + $C.skipped)
+Write-Output ("FAILED=" + $C.failed)
+Write-Output ("UNATTRIBUTED=" + $C.unattributed)
+Write-Output ("PENDING=" + $C.pending)
+Write-Output ("OWN_RECEIPTS_WITNESSED=" + $own.Witnessed)
+foreach($i in $InboxReport){ Write-Output ("INBOX " + $i.name + " " + $i.state) }
+foreach($u in $Unattributed){ Write-Output ("NFL_INGEST_UNATTRIBUTED " + $u) }

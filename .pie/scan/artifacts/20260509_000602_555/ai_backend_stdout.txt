@@ -1,0 +1,45 @@
+# Never Forgetting Ledger (NFL)
+
+## Project Overview
+
+**Project Name:** NFL  
+**Repository Location:** C:\dev\fl  
+
+Never Forgetting Ledger (NFL) is a permanent integrity ledger for cryptographic hashes. It allows systems and users to commit a hash once, store it with a timestamp, and look it up or verify it at any time. NFL ensures that important hashes are never lost and can always be independently verified.
+
+## Languages/Stacks
+
+- PowerShell
+- SQLite (for storing the ledger)
+- YAML (for configuration files)
+
+## Important Docs
+
+1. **README.md** - Provides an overview of NFL and basic usage instructions.
+2. **docs/NFL_API_QUICKSTART.md** - Detailed guide on how to use the NFL API.
+3. **scripts/fl_api_v1.ps1** - The PowerShell script for starting the NFL API server.
+4. **scripts/fl_cli_v1.ps1** - The PowerShell script for interacting with NFL via CLI.
+5. **test_vectors/fl_packet_verify_v1/negative/bad_sha256sum_line_0537effea5f535d061b313f72e37ca52d4a34fff00865066c51fa7dff410618a/payload/repo_snapshot/repo_root/README.md** - Example of a bad SHA-256 checksum in a test vector.
+
+## Changes Since Previous Scan
+
+- **Proofs:**
+  - `fl_ingest_runs.ndjson` has been modified.
+  - `last_run.json` under `runtime\ingest` has been updated.
+
+## What PIE Should Remember
+
+- NFL is a witness-only system that records hashes and timestamps events but does not decide trust, enforce policy, or define truth.
+- The Tier-0 status of NFL is complete and frozen.
+- Key documents include the API quickstart guide and the README for basic usage instructions.
+
+## Recommended Next Read Targets
+
+1. **docs/NFL_API_QUICKSTART.md** - Learn how to use the NFL API effectively.
+2. **scripts/fl_api_v1.ps1** - Understand how to start the NFL API server.
+3. **scripts/fl_cli_v1.ps1** - Explore CLI usage options for interacting with NFL.
+
+## Uncertainty
+
+- Some files have backup extensions (e.g., `.bak`, `.bak_YYYYMMDD_HHMMSS`), indicating potential ongoing development or issues.
+- The presence of multiple candidate documentation and patch scripts suggests active maintenance or updates to the project.

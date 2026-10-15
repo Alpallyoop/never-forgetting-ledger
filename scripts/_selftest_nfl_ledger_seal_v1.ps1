@@ -56,8 +56,8 @@ function StartChild([string]$FileName,[string]$Arguments){
 }
 
 $RepoRoot = (Resolve-Path -LiteralPath $RepoRoot).Path
-$PSExe = (Get-Command powershell.exe -ErrorAction Stop).Source
-$ssh = (Get-Command ssh-keygen.exe -ErrorAction Stop).Source
+$PSExe = (Get-Process -Id $PID).Path
+$ssh = (Get-Command @("ssh-keygen.exe","ssh-keygen") -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1).Source; if(-not $ssh){ throw "SSH_KEYGEN_NOT_FOUND" }
 $CkptScript = Join-Path $RepoRoot "scripts\nfl_ledger_checkpoint_v1.ps1"
 $SealScript = Join-Path $RepoRoot "scripts\nfl_ledger_seal_v1.ps1"
 foreach($s in @($CkptScript,$SealScript)){ if(-not (Test-Path -LiteralPath $s -PathType Leaf)){ Fail ("MISSING_SCRIPT:" + $s) } }

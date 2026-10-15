@@ -1,0 +1,12 @@
+{
+    "schema":  "pie.repo.scan.artifact.v1",
+    "project":  "nfl",
+    "target_repo":  "C:\\dev\\nfl",
+    "scan_id":  "20260507_211954_012",
+    "inventory":  "C:\\dev\\nfl\\.pie\\scan\\artifacts\\20260507_211954_012\\inventory.json",
+    "diff":  "C:\\dev\\nfl\\.pie\\scan\\artifacts\\20260507_211954_012\\diff.txt",
+    "ai_prompt":  "C:\\dev\\nfl\\.pie\\scan\\artifacts\\20260507_211954_012\\ai_prompt.txt",
+    "ai_description":  "C:\\dev\\nfl\\.pie\\scan\\artifacts\\20260507_211954_012\\ai_repo_description.md",
+    "status":  "scan_complete",
+    "created_utc":  "2026-05-08T01:21:58.1487413Z"
+}

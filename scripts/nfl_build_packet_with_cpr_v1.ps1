@@ -6,7 +6,7 @@ param(
   [Parameter(Mandatory=$true)]
   [string]$OutDir,
   [Parameter(Mandatory=$false)]
-  [string]$CprRepoRoot = "C:\dev\cpr"
+  [string]$CprRepoRoot = $env:NFL_CPR_ROOT
 )
 
 Set-StrictMode -Version Latest
@@ -103,7 +103,7 @@ try {
 
   EnsureDir $OutDir
 
-  $PSExe = (Get-Command powershell.exe).Source
+  $PSExe = (Get-Process -Id $PID).Path
   $Output = & $PSExe `
     -NoProfile `
     -NonInteractive `

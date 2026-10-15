@@ -1,0 +1,7 @@
+PIE REPO SCAN DIFF
+project=nfl
+repo=C:\dev\nfl
+scan=20260508_233745_334
+
+CHANGED proofs\receipts\nfl_ingest_runs.ndjson
+CHANGED runtime\ingest\last_run.json

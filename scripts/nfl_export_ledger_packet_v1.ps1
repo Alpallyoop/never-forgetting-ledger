@@ -58,7 +58,7 @@ $RepoRoot = (Resolve-Path -LiteralPath $RepoRoot).Path
 $Ledger = Join-Path $RepoRoot "data\ledger.ndjson"
 if(-not (Test-Path -LiteralPath $Ledger -PathType Leaf)){ Fail "LEDGER_MISSING" }
 
-$OutRoot = "C:\dev\nfl\packets\outbox"
+$OutRoot = Join-Path $RepoRoot "packets\outbox"
 EnsureDir $OutRoot
 
 $stamp = (Get-Date).ToUniversalTime().ToString("yyyyMMddTHHmmssZ")

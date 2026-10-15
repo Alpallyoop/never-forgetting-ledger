@@ -1,3 +1,6 @@
+> **Historical (2026-03-07).** This page describes NFL before packet-law verification moved to CPR. It is kept
+> as a record. Current role, state and open items: `../README.md` and `NFL_HANDOFF_CURRENT.md`.
+
 # NFL Canonical Status
 
 Instrument: NFL (Universal Witness Ledger)

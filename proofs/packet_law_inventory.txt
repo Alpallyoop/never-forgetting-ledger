@@ -184,17 +184,14 @@ C:\dev\nfl\scripts\_PATCH_rotate_nfl_key_unencrypted_CANON_v18.ps1
 C:\dev\nfl\scripts\_PATCH_rotate_nfl_key_unencrypted_CANON_v9.ps1
   matches: Get-FileHash, SHA256
 
+C:\dev\nfl\scripts\_RUN_nfl_witness_index_lens_duplication_v1.ps1
+  matches: packet_id, manifest.json, Get-FileHash, SHA256, ConvertTo-Json
+
 C:\dev\nfl\scripts\_scratch\quarantine\_bootstrap_neverlost_v1_nfl_FIXED.BAD_20260302T015734Z.ps1
   matches: Get-FileHash, SHA256
 
 C:\dev\nfl\scripts\_scratch\quarantine\_install_neverlost_v1_nfl.BAD_20260302T030701Z.ps1
   matches: SHA256
-
-C:\dev\nfl\scripts\_selftest_nfl_tier0_locked_v1.ps1
-  matches: sha256sums, Get-FileHash, SHA256, ConvertTo-Json
-
-C:\dev\nfl\scripts\_selftest_nfl_tier0_v1.ps1
-  matches: sha256sums, Get-FileHash, SHA256
 
 C:\dev\nfl\scripts\_STAMP_packet_constitution_v1_docs_and_vectors_v2.ps1
   matches: sha256sums, packet_id, manifest.json, SHA256
@@ -221,26 +218,14 @@ C:\dev\nfl\scripts\nfl_export_ledger_packet_v1.ps1
   matches: sha256sums, packet_id, manifest.json, Get-FileHash, SHA256, ConvertTo-Json
 
 C:\dev\nfl\scripts\nfl_sign_ledger_packet_v1.ps1
-  matches: manifest.json
-
-C:\dev\nfl\scripts\nfl_verify_ledger_packet_v1.ps1
-  matches: sha256sums, packet_id, manifest.json, Get-FileHash, SHA256, ConvertFrom-Json
+  matches: sha256sums, manifest.json, Get-FileHash, SHA256, ConvertTo-Json
 
 C:\dev\nfl\scripts\nfl_verify_packet_with_cpr_v1.ps1
   matches: packet_id, ConvertTo-Json
-
-C:\dev\nfl\scripts\scan_inbox.ps1
-  matches: sha256sums, packet_id, manifest.json, Get-FileHash, SHA256, ConvertFrom-Json, ConvertTo-Json
 
 C:\dev\nfl\scripts\selftest_vectors_v1.ps1
   matches: sha256sums, packet_id, SHA256, ConvertFrom-Json, ConvertTo-Json
 
 C:\dev\nfl\scripts\selftest_verify_packet_v1.ps1
   matches: SHA256, ConvertTo-Json
-
-C:\dev\nfl\scripts\verify_covenant_packet_v1.ps1
-  matches: sha256sums, SHA256, ConvertFrom-Json
-
-C:\dev\nfl\scripts\verify_packet_v1.ps1
-  matches: sha256sums, SHA256, ConvertFrom-Json
 

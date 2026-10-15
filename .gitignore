@@ -21,3 +21,21 @@ proofs/exports/
 
 # rotated telemetry archives
 proofs/receipts/archive/
+
+# ledger write-lock + chain-verify telemetry
+data/*.lock
+proofs/receipts/nfl.ledger.chain_verify.ndjson
+
+# SECRETS: never version private keys
+proofs/keys/id_ed25519
+proofs/keys/*.key
+*.pem
+runtime/scheduler/
+
+# lock files next to receipts
+proofs/receipts/**/*.lock
+proofs/receipts/*.lock
+
+# operator drop folders and derived manifests (runtime)
+inbox/
+runtime/manifests/

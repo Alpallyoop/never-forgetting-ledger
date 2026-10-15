@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "nfl.inbox_registry.v1",
+  "title": "nfl.inbox_registry.v1 - config/inbox_registry.json",
+  "description": "Inboxes NFL ingest scans. path is relative to the NFL repository (absolute paths are accepted but discouraged). NFL never creates a directory outside its own repository: a missing foreign inbox is reported 'unavailable'. Each inbox says who the items belong to: source 'local' (NFL's own operator inbox) or integration '<consumer>><provider>' (must be a registered integration in .constellation/SERVICE_MAP.md). Items without either are not committed (NFL_INGEST_UNATTRIBUTED).",
+  "type": "object",
+  "required": ["schema","inboxes"],
+  "properties": {
+    "schema": { "const": "nfl.inbox_registry.v1" },
+    "inboxes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name","path","mode"],
+        "additionalProperties": false,
+        "properties": {
+          "name": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
+          "path": { "type": "string", "minLength": 1 },
+          "mode": { "enum": ["packet","file","receipt"] },
+          "source": { "enum": ["local"] },
+          "integration": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*>[a-z0-9][a-z0-9-]*$" },
+          "note": { "type": "string" }
+        }
+      }
+    }
+  }
+}

@@ -3,7 +3,7 @@ param()
 $ErrorActionPreference="Stop"
 Set-StrictMode -Version Latest
 
-$RepoRoot = "C:\dev\nfl"
+$RepoRoot = (Split-Path -Parent $PSScriptRoot)
 $Principal = "single-tenant/local/authority/nfl"
 $KeyId = "dev-1"
 $PubKeyPath = Join-Path $RepoRoot "proofs\keys\nfl-local_ed25519.pub"

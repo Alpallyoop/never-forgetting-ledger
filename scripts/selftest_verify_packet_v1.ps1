@@ -1,5 +1,5 @@
 param(
-  [Parameter(Mandatory=$false)][string]$RepoRoot = "C:\dev\nfl",
+  [Parameter(Mandatory=$false)][string]$RepoRoot = (Split-Path -Parent $PSScriptRoot),
   [Parameter(Mandatory=$false)][string]$PacketRoot = "C:\covenant_inbox\0537effea5f535d061b313f72e37ca52d4a34fff00865066c51fa7dff410618a",
   [Parameter(Mandatory=$false)][string]$SigNamespace = "covenant-nfl"
 )

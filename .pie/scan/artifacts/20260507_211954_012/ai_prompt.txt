@@ -1,0 +1,1920 @@
+You are PIE creating a repo intelligence artifact.
+
+Rules:
+- Do not invent files.
+- Use only the inventory summary, candidate docs, and diff provided.
+- Describe what this repo appears to be.
+- List likely languages/stacks.
+- List important files/docs found.
+- List changes since previous scan.
+- State uncertainty clearly.
+- AI is assistant only, not executor.
+
+PROJECT:
+nfl
+
+REPO:
+C:\dev\nfl
+
+INVENTORY FILE COUNT:
+2008
+
+DIFF:
+PIE REPO SCAN DIFF
+project=nfl
+repo=C:\dev\nfl
+scan=20260507_211954_012
+
+ADDED CUsersalecm\.nfl-keytest\nfl_keytest_f0f81dc2af76411ba9227446f2181550\allowed_signers
+ADDED CUsersalecm\.nfl-keytest\nfl_keytest_f0f81dc2af76411ba9227446f2181550\key
+ADDED CUsersalecm\.nfl-keytest\nfl_keytest_f0f81dc2af76411ba9227446f2181550\key.pub
+ADDED CUsersalecm\.nfl-keytest\nfl_keytest_f0f81dc2af76411ba9227446f2181550\payload.txt
+ADDED CUsersalecm\.nfl-keytest\nfl_keytest_f0f81dc2af76411ba9227446f2181550\revoked_keys
+CHANGED proofs\receipts\nfl_ingest_runs.ndjson
+CHANGED runtime\ingest\last_run.json
+ADDED CUsersalecm\.nfl-keytest\nfl_keytest_a0358ca389404f678b91c2f12006d9c9\allowed_signers
+ADDED CUsersalecm\.nfl-keytest\nfl_keytest_a0358ca389404f678b91c2f12006d9c9\key
+ADDED CUsersalecm\.nfl-keytest\nfl_keytest_a0358ca389404f678b91c2f12006d9c9\key.pub
+ADDED CUsersalecm\.nfl-keytest\nfl_keytest_a0358ca389404f678b91c2f12006d9c9\payload.txt
+ADDED CUsersalecm\.nfl-keytest\nfl_keytest_a0358ca389404f678b91c2f12006d9c9\revoked_keys
+REMOVED Cï€ºïœUsersïœalecm\.nfl-keytest\nfl_keytest_f0f81dc2af76411ba9227446f2181550\allowed_signers
+REMOVED Cï€ºïœUsersïœalecm\.nfl-keytest\nfl_keytest_f0f81dc2af76411ba9227446f2181550\key
+REMOVED Cï€ºïœUsersïœalecm\.nfl-keytest\nfl_keytest_f0f81dc2af76411ba9227446f2181550\key.pub
+REMOVED Cï€ºïœUsersïœalecm\.nfl-keytest\nfl_keytest_f0f81dc2af76411ba9227446f2181550\payload.txt
+REMOVED Cï€ºïœUsersïœalecm\.nfl-keytest\nfl_keytest_f0f81dc2af76411ba9227446f2181550\revoked_keys
+REMOVED ïœCï€ºïœUsersïœalecm\.nfl-keytest\nfl_keytest_a0358ca389404f678b91c2f12006d9c9\allowed_signers
+REMOVED ïœCï€ºïœUsersïœalecm\.nfl-keytest\nfl_keytest_a0358ca389404f678b91c2f12006d9c9\key
+REMOVED ïœCï€ºïœUsersïœalecm\.nfl-keytest\nfl_keytest_a0358ca389404f678b91c2f12006d9c9\key.pub
+REMOVED ïœCï€ºïœUsersïœalecm\.nfl-keytest\nfl_keytest_a0358ca389404f678b91c2f12006d9c9\payload.txt
+REMOVED ïœCï€ºïœUsersïœalecm\.nfl-keytest\nfl_keytest_a0358ca389404f678b91c2f12006d9c9\revoked_keys
+
+CANDIDATE DOC CONTENT:
+FILE: C:\dev\nfl\handoff\watchtower\nfl_tier0_watchtower_handoff_20260308T024440Z\README_HANDOFF.txt
+NFL -> WatchTower handoff bundle
+
+Purpose:
+- consume locked NFL Tier-0 public surface
+- verify WatchTower can read frozen NFL evidence
+- do not modify NFL verifier law
+
+Start from:
+- scripts/_selftest_nfl_tier0_locked_v1.ps1
+- frozen/*
+- test_vectors/nfl_packet_verify_v1/suite.json
+
+Expected next WatchTower work:
+- import this handoff bundle into WatchTower repo
+- write a WatchTower consume script
+- verify WatchTower can parse locked NFL artifacts
+- emit a WatchTower receipt over this handoff
+
+
+FILE: C:\dev\nfl\README.md
+\# Never Forgetting Ledger (NFL)
+
+
+
+Never Forgetting Ledger (NFL) is a permanent integrity ledger for cryptographic hashes.
+
+
+
+It allows systems and users to:
+
+\- commit a hash once
+
+\- store it with a timestamp
+
+\- look it up or verify it at any time
+
+
+
+NFL ensures that important hashes are never lost and can always be independently verified.
+
+
+
+\---
+
+
+
+\## What NFL Does
+
+
+
+NFL provides three core operations:
+
+
+
+\- \*\*Commit\*\* â†’ store a hash with metadata  
+
+\- \*\*Lookup\*\* â†’ retrieve a previously committed record  
+
+\- \*\*Verify\*\* â†’ hash a file and check if it exists in the ledger  
+
+
+
+Deterministic result tokens:
+
+
+
+```text
+
+COMMIT\_OK
+
+FOUND
+
+NOT\_FOUND
+
+VERIFIED
+
+Quickstart
+
+
+
+Start the API:
+
+
+
+powershell.exe -NoProfile -ExecutionPolicy Bypass `
+
+&#x20; -File scripts\\nfl\_api\_v1.ps1 `
+
+&#x20; -RepoRoot . `
+
+&#x20; -Prefix "http://127.0.0.1:8085/"
+
+
+
+Test lookup:
+
+
+
+Invoke-RestMethod -Method Get `
+
+&#x20; -Uri "http://127.0.0.1:8085/lookup?hash=abc123"
+
+
+
+Full API usage:
+
+
+
+docs/NFL\_API\_QUICKSTART.md
+
+API Overview
+
+Commit
+
+POST /commit
+
+Lookup
+
+GET /lookup?hash=<hash>
+
+Verify
+
+POST /verify
+
+CLI Usage
+
+scripts\\nfl\_cli\_v1.ps1
+
+
+
+Commit:
+
+
+
+.\\scripts\\nfl\_cli\_v1.ps1 commit -Hash "abc123" -Artifact "test"
+
+
+
+Lookup:
+
+
+
+.\\scripts\\nfl\_cli\_v1.ps1 lookup -Hash "abc123"
+
+
+
+Verify:
+
+
+
+.\\scripts\\nfl\_cli\_v1.ps1 verify -File "C:\\Windows\\notepad.exe"
+
+System Role
+
+
+
+NFL is a witness-only system.
+
+
+
+It:
+
+
+
+records hashes
+
+timestamps events
+
+returns deterministic results
+
+
+
+It does not:
+
+
+
+decide trust
+
+enforce policy
+
+define truth
+
+
+
+It only answers:
+
+
+
+"Has this hash been seen before?"
+
+Tier-0 Status
+
+
+
+Tier-0 is complete and frozen.
+
+
+
+Canonical documents
+
+docs/NFL\_TIER0\_LOCK.md
+
+docs/NFL\_CANONICAL\_STATUS.md
+
+Frozen evidence
+
+test\_vectors/tier0\_frozen/nfl\_tier0\_green\_20260307
+
+Canonical tags
+
+nfl-tier0-green-20260307
+
+nfl-tier0-release-hygiene-20260307
+
+Public Surface
+
+scripts/verify\_packet\_v1.ps1
+
+scripts/selftest\_verify\_packet\_v1.ps1
+
+scripts/selftest\_vectors\_v1.ps1
+
+scripts/\_selftest\_nfl\_tier0\_locked\_v1.ps1
+
+scripts/nfl\_cli\_v1.ps1
+
+scripts/nfl\_api\_v1.ps1
+
+Summary
+
+
+
+Never Forgetting Ledger is a simple, durable system:
+
+
+
+hash something
+
+commit it once
+
+verify it forever
+
+
+
+No interpretation.
+
+No mutation.
+
+No forgetting.
+
+
+
+FILE: C:\dev\nfl\test_vectors\nfl_packet_verify_v1\negative\bad_sha256sum_line_0537effea5f535d061b313f72e37ca52d4a34fff00865066c51fa7dff410618a\payload\repo_snapshot\repo_root\README.md
+UNREADABLE_DOC
+
+FILE: C:\dev\nfl\test_vectors\nfl_packet_verify_v1\negative\bad_sha256sum_line_0537effea5f535d061b313f72e37ca52d4a34fff00865066c51fa7dff410618a\payload\repo_snapshot\repo_root\sql\introspection\000_introspect_core_objects.sql
+-- GI/PPI introspection: canonical columns + constraints
+
+select 'governance_policy_versions.columns' as section;
+select column_name, data_type, is_nullable, column_default
+from information_schema.columns
+where table_schema='public' and table_name='governance_policy_versions'
+order by ordinal_position;
+
+select 'governance_policy_rules.columns' as section;
+select column_name, data_type, is_nullable, column_default
+from information_schema.columns
+where table_schema='public' and table_name='governance_policy_rules'
+order by ordinal_position;
+
+select 'governance_evaluations.columns' as section;
+select column_name, data_type, is_nullable, column_default
+from information_schema.columns
+where table_schema='public' and table_name='governance_evaluations'
+order by ordinal_position;
+
+select 'governance_reason_codes.columns' as section;
+select column_name, data_type, is_nullable, column_default
+from information_schema.columns
+where table_schema='public' and table_name='governance_reason_codes'
+order by ordinal_position;
+
+select 'policy_rules.constraints' as section;
+select conname, pg_get_constraintdef(c.oid) as constraint_def
+from pg_constraint c
+join pg_class t on t.oid = c.conrelid
+join pg_namespace n on n.oid = t.relnamespace
+where n.nspname='public' and t.relname='governance_policy_rules'
+order by conname;
+
+select 'graph_edges.constraints' as section;
+select conname, pg_get_constraintdef(c.oid) as constraint_def
+from pg_constraint c
+join pg_class t on t.oid = c.conrelid
+join pg_namespace n on n.oid = t.relnamespace
+where n.nspname='public' and t.relname='governance_policy_rule_graph_edges'
+order by conname;
+
+
+FILE: C:\dev\nfl\test_vectors\nfl_packet_verify_v1\negative\bad_sha256sum_line_0537effea5f535d061b313f72e37ca52d4a34fff00865066c51fa7dff410618a\payload\repo_snapshot\repo_root\sql\introspection\000_introspect_gi_ppi_objects.sql
+-- GI/PPI INTROSPECTION â€” CANONICAL
+-- Purpose: pull exact schemas/constraints for audit + debugging
+
+select 'governance_policy_versions' as obj, column_name, data_type, is_nullable, column_default
+from information_schema.columns
+where table_schema='public' and table_name='governance_policy_versions'
+order by ordinal_position;
+
+select 'governance_policy_rules' as obj, column_name, data_type, is_nullable, column_default
+from information_schema.columns
+where table_schema='public' and table_name='governance_policy_rules'
+order by ordinal_position;
+
+select 'governance_evaluations' as obj, column_name, data_type, is_nullable, column_default
+from information_schema.columns
+where table_schema='public' and table_name='governance_evaluations'
+order by ordinal_position;
+
+select conname, pg_get_constraintdef(c.oid) as constraint_def
+from pg_constraint c
+join pg_class t on t.oid = c.conrelid
+join pg_namespace n on n.oid = t.relnamespace
+where n.nspname='public'
+  and t.relname in ('governance_policy_versions','governance_policy_rules','governance_evaluations','governance_policy_rule_graph_nodes','governance_policy_rule_graph_edges')
+order by t.relname, conname;
+
+
+FILE: C:\dev\nfl\test_vectors\nfl_packet_verify_v1\negative\bad_sha256sum_line_0537effea5f535d061b313f72e37ca52d4a34fff00865066c51fa7dff410618a\payload\repo_snapshot\repo_root\sql\migrations\040_introspection_views.sql
+-- 040_introspection_views.sql
+-- Read-only introspection views for operators and auditors.
+
+create or replace view public.v_gi_ppi_policies as
+select
+  policy_version_id,
+  version_name,
+  status,
+  created_at,
+  activated_at,
+  policy_hash_sha256,
+  rule_graph_hash_sha256
+from public.governance_policy_versions
+order by created_at desc;
+
+create or replace view public.v_gi_ppi_active_policy as
+select *
+from public.governance_policy_versions
+where status = 'active'
+order by created_at desc
+limit 1;
+
+create or replace view public.v_gi_ppi_rules as
+select
+  r.policy_version_id,
+  r.rule_id,
+  r.rule_order,
+  r.priority,
+  r.decision,
+  r.reason_code,
+  r.match_note,
+  r.match
+from public.governance_policy_rules r;
+
+create or replace view public.v_gi_ppi_reason_codes as
+select code, severity, description
+from public.governance_reason_codes
+order by code asc;
+
+create or replace view public.v_gi_ppi_latest_evaluations as
+select
+  evaluation_id,
+  policy_version_id,
+  policy_hash_sha256,
+  proposal_hash,
+  proposal_hash_jcs_sha256,
+  proposal_hash_pg_sha256,
+  proposal_canon_hash_sha256,
+  decision,
+  reason_codes,
+  created_at
+from public.governance_evaluations
+order by created_at desc;
+
+grant select on public.v_gi_ppi_policies to anon, authenticated;
+grant select on public.v_gi_ppi_active_policy to anon, authenticated;
+grant select on public.v_gi_ppi_rules to anon, authenticated;
+grant select on public.v_gi_ppi_reason_codes to anon, authenticated;
+grant select on public.v_gi_ppi_latest_evaluations to anon, authenticated;
+
+
+FILE: C:\dev\nfl\test_vectors\nfl_packet_verify_v1\negative\bad_sha256sum_line_0537effea5f535d061b313f72e37ca52d4a34fff00865066c51fa7dff410618a\payload\repo_snapshot\repo_root\sql\ops\200_org_plan_and_overlay.sql
+-- ============================================================
+-- COVENANT / GI-PPI: ORG PLAN + OVERLAY POLICY (CANONICAL V0)
+-- - plan enforcement
+-- - overlay: append-only versions + hash binding + active pointer
+-- - overlay evaluator: DENY/NO_OP only
+-- - combined eval RPC: canonical eval + overlay diagnostics (immutable)
+-- ============================================================
+
+-- ----------------------------
+-- 1) Plan registry + org plan
+-- ----------------------------
+create table if not exists public.gi_ppi_plan_catalog (
+  plan_code text primary key,
+  description text not null,
+  allow_overlay boolean not null default false,
+  created_at timestamptz not null default now()
+);
+
+insert into public.gi_ppi_plan_catalog (plan_code, description, allow_overlay)
+values
+  ('tier0_instrument', 'Instrument access only (no overlay uploads).', false),
+  ('tier1_curated',    'Instrument + curated overlay governance (DENY/NO_OP only).', true),
+  ('institutional',    'Dedicated institution license. Overlay allowed.', true)
+on conflict (plan_code) do update
+set description = excluded.description,
+    allow_overlay = excluded.allow_overlay;
+
+create table if not exists public.gi_ppi_org_plan (
+  org_id uuid primary key references public.gi_ppi_orgs(org_id) on delete cascade,
+  plan_code text not null references public.gi_ppi_plan_catalog(plan_code),
+  updated_at timestamptz not null default now(),
+  updated_by uuid null
+);
+
+-- RLS
+alter table public.gi_ppi_plan_catalog enable row level security;
+alter table public.gi_ppi_org_plan enable row level security;
+
+-- Public cannot read catalog; authenticated can read catalog if you want (optional).
+drop policy if exists gi_ppi_plan_catalog_no_anon on public.gi_ppi_plan_catalog;
+create policy gi_ppi_plan_catalog_no_anon
+on public.gi_ppi_plan_catalog
+for all
+to anon
+using (false)
+with check (false);
+
+drop policy if exists gi_ppi_plan_catalog_read_auth on public.gi_ppi_plan_catalog;
+create policy gi_ppi_plan_catalog_read_auth
+on public.gi_ppi_plan_catalog
+for select
+to authenticated
+using (true);
+
+-- Org plan: org members can read their org plan; no direct mutations
+drop policy if exists gi_ppi_org_plan_member_read on public.gi_ppi_org_plan;
+create policy gi_ppi_org_plan_member_read
+on public.gi_ppi_org_plan
+for select
+to authenticated
+using (
+  exists (
+    select 1
+    from public.gi_ppi_org_members m
+    where m.org_id = gi_ppi_org_plan.org_id
+      and m.user_id = auth.uid()
+      and m.status = 'active'
+  )
+);
+
+drop policy if exists gi_ppi_org_plan_no_direct_mutation_anon on public.gi_ppi_org_plan;
+create policy gi_ppi_org_plan_no_direct_mutation_anon
+on public.gi_ppi_org_plan
+for all
+to anon
+using (false)
+with check (false);
+
+drop policy if exists gi_ppi_org_plan_no_direct_mutation_auth on public.gi_ppi_org_plan;
+create policy gi_ppi_org_plan_no_direct_mutation_auth
+on public.gi_ppi_org_plan
+for insert, update, delete
+to authenticated
+using (false)
+with check (false);
+
+-- ----------------------------
+-- 2) Overlay tables (append-only versions)
+-- ----------------------------
+create table if not exists public.gi_ppi_org_overlay_versions (
+  overlay_version_id uuid primary key default gen_random_uuid(),
+  org_id uuid not null references public.gi_ppi_orgs(org_id) on delete cascade,
+  overlay_json jsonb not null,
+  overlay_hash_sha256 text not null,
+  created_at timestamptz not null default now(),
+  created_by uuid null
+);
+
+create unique index if not exists ux_gi_ppi_org_overlay_versions_org_hash
+on public.gi_ppi_org_overlay_versions(org_id, overlay_hash_sha256);
+
+-- Append-only guard
+create or replace function public._gi_ppi_overlay_versions_append_only_guard()
+returns trigger
+language plpgsql
+as $$
+begin
+  raise exception 'APPEND_ONLY: mutation forbidden on gi_ppi_org_overlay_versions';
+end;
+$$;
+
+drop trigger if exists trg_gi_ppi_overlay_versions_append_only on public.gi_ppi_org_overlay_versions;
+create trigger trg_gi_ppi_overlay_versions_append_only
+before update or delete on public.gi_ppi_org_overlay_versions
+for each row execute function public._gi_ppi_overlay_versions_append_only_guard();
+
+-- Active pointer (mutable, but audited by history table)
+create table if not exists public.gi_ppi_org_overlay_active (
+  org_id uuid primary key references public.gi_ppi_orgs(org_id) on delete cascade,
+  overlay_version_id uuid not null references public.gi_ppi_org_overlay_versions(overlay_version_id),
+  activated_at timestamptz not null default now(),
+  activated_by uuid null
+);
+
+alter table public.gi_ppi_org_overlay_versions enable row level security;
+alter table public.gi_ppi_org_overlay_active enable row level security;
+
+-- Members can read overlay versions for their org; no direct writes
+drop policy if exists gi_ppi_overlay_versions_member_read on public.gi_ppi_org_overlay_versions;
+create policy gi_ppi_overlay_versions_member_read
+on public.gi_ppi_org_overlay_versions
+for select
+to authenticated
+using (
+  exists (
+    select 1
+    from public.gi_ppi_org_members m
+    where m.org_id = gi_ppi_org_overlay_versions.org_id
+      and m.user_id = auth.uid()
+      and m.status = 'active'
+  )
+);
+
+drop policy if exists gi_ppi_overlay_versions_no_direct_insert_auth on public.gi_ppi_org_overlay_versions;
+create policy gi_ppi_overlay_versions_no_direct_insert_auth
+on public.gi_ppi_org_overlay_versions
+for insert
+to authenticated
+with check (false);
+
+drop policy if exists gi_ppi_overlay_versions_no_direct_insert_anon on public.gi_ppi_org_overlay_versions;
+create policy gi_ppi_overlay_versions_no_direct_insert_anon
+on public.gi_ppi_org_overlay_versions
+for insert
+to anon
+with check (false);
+
+-- Active pointer read allowed to org members; no direct mutation
+drop policy if exists gi_ppi_overlay_active_member_read on public.gi_ppi_org_overlay_active;
+create policy gi_ppi_overlay_active_member_read
+on public.gi_ppi_org_overlay_active
+for select
+to authenticated
+using (
+  exists (
+    select 1
+    from public.gi_ppi_org_members m
+    where m.org_id = gi_ppi_org_overlay_active.org_id
+      and m.user_id = auth.uid()
+      and m.status = 'active'
+  )
+);
+
+drop policy if exists gi_ppi_overlay_active_no_direct_mutation_auth on public.gi_ppi_org_overlay_active;
+create policy gi_ppi_overlay_active_no_direct_mutation_auth
+on public.gi_ppi_org_overlay_active
+for insert, update, delete
+to authenticated
+using (false)
+with check (false);
+
+drop policy if exists gi_ppi_overlay_active_no_direct_mutation_anon on public.gi_ppi_org_overlay_active;
+create policy gi_ppi_overlay_active_no_direct_mutation_anon
+on public.gi_ppi_org_overlay_active
+for all
+to anon
+using (false)
+with check (false);
+
+-- ----------------------------
+-- 3) Helpers: admin require + plan gate
+-- ----------------------------
+create or replace function public._gi_ppi_require_admin()
+returns void
+language plpgsql
+as $$
+begin
+  if auth.uid() is null then
+    raise exception 'AUTH_REQUIRED';
+  end if;
+
+  if not exists (select 1 from public.gi_ppi_admins a where a.user_id = auth.uid()) then
+    raise exception 'ADMIN_REQUIRED';
+  end if;
+end;
+$$;
+
+create or replace function public._gi_ppi_org_allows_overlay(p_org_id uuid)
+returns boolean
+language sql
+stable
+as $$
+  select coalesce(pc.allow_overlay, false)
+  from public.gi_ppi_org_plan op
+  join public.gi_ppi_plan_catalog pc on pc.plan_code = op.plan_code
+  where op.org_id = p_org_id
+$$;
+
+-- ----------------------------
+-- 4) RPC: admin set org plan
+-- ----------------------------
+create or replace function public.gi_ppi_admin_set_org_plan(
+  p_org_id uuid,
+  p_plan_code text,
+  p_operator_user_id uuid
+)
+returns jsonb
+language plpgsql
+security definer
+as $$
+begin
+  perform public._gi_ppi_require_admin();
+
+  if p_operator_user_id is null or p_operator_user_id <> auth.uid() then
+    raise exception 'OPERATOR_MISMATCH';
+  end if;
+
+  if p_org_id is null then raise exception 'INVALID_ORG_ID'; end if;
+  if p_plan_code is null or btrim(p_plan_code) = '' then raise exception 'INVALID_PLAN_CODE'; end if;
+
+  -- upsert org plan
+  insert into public.gi_ppi_org_plan (org_id, plan_code, updated_by)
+  values (p_org_id, p_plan_code, auth.uid())
+  on conflict (org_id) do update
+  set plan_code = excluded.plan_code,
+      updated_at = now(),
+      updated_by = auth.uid();
+
+  return jsonb_build_object('ok', true, 'org_id', p_org_id, 'plan_code', p_plan_code, 'operator_user_id', auth.uid());
+end;
+$$;
+
+grant execute on function public.gi_ppi_admin_set_org_plan(uuid,text,uuid) to authenticated;
+
+-- ----------------------------
+-- 5) RPC: publish overlay (admin only; overlay allowed by plan)
+--    - stores append-only version (hash bound)
+--    - sets active pointer
+-- ----------------------------
+create or replace function public.gi_ppi_admin_publish_overlay(
+  p_org_id uuid,
+  p_overlay_json jsonb,
+  p_overlay_hash_sha256 text,
+  p_operator_user_id uuid
+)
+returns jsonb
+language plpgsql
+security definer
+as $$
+declare
+  v_overlay_version_id uuid;
+  v_allow boolean;
+begin
+  perform public._gi_ppi_require_admin();
+
+  if p_operator_user_id is null or p_operator_user_id <> auth.uid() then
+    raise exception 'OPERATOR_MISMATCH';
+  end if;
+
+  if p_org_id is null then raise exception 'INVALID_ORG_ID'; end if;
+  if p_overlay_json is null then raise exception 'INVALID_OVERLAY_JSON'; end if;
+  if p_overlay_hash_sha256 is null or btrim(p_overlay_hash_sha256) = '' then raise exception 'INVALID_OVERLAY_HASH'; end if;
+
+  v_allow := coalesce(public._gi_ppi_org_allows_overlay(p_org_id), false);
+  if not v_allow then
+    raise exception 'OVERLAY_NOT_ENTITLED';
+  end if;
+
+  insert into public.gi_ppi_org_overlay_versions (org_id, overlay_json, overlay_hash_sha256, created_by)
+  values (p_org_id, p_overlay_json, p_overlay_hash_sha256, auth.uid())
+  on conflict (org_id, overlay_hash_sha256) do update
+  set overlay_json = excluded.overlay_json -- same hash => same content expected; keep id stable per insert attempt
+  returning overlay_version_id into v_overlay_version_id;
+
+  insert into public.gi_ppi_org_overlay_active (org_id, overlay_version_id, activated_by)
+  values (p_org_id, v_overlay_version_id, auth.uid())
+  on conflict (org_id) do update
+  set overlay_version_id = excluded.overlay_version_id,
+      activated_at = now(),
+      activated_by = auth.uid();
+
+  return jsonb_build_object(
+    'ok', true,
+    'org_id', p_org_id,
+    'overlay_version_id', v_overlay_version_id,
+    'overlay_hash_sha256', p_overlay_hash_sha256,
+    'operator_user_id', auth.uid()
+  );
+end;
+$$;
+
+grant execute on function public.gi_ppi_admin_publish_overlay(uuid,jsonb,text,uuid) to authenticated;
+
+-- ----------------------------
+-- 6) Overlay evaluator (DENY / NO_OP only)
+--    Overlay schema: { schema_version, deny: { task_type: [..] } }
+-- ----------------------------
+create or replace function public.gi_ppi_overlay_eval(
+  p_org_id uuid,
+  p_proposal jsonb
+)
+returns table (
+  overlay_decision text,
+  overlay_reason_codes text[],
+  overlay_diagnostics jsonb
+)
+language plpgsql
+stable
+as $$
+declare
+  v_overlay jsonb;
+  v_task_type text;
+  v_denied_task_types jsonb;
+begin
+  -- if no active overlay => NO_OP (we do NOT throw)
+  select ov.overlay_json into v_overlay
+  from public.gi_ppi_org_overlay_active a
+  join public.gi_ppi_org_overlay_versions ov on ov.overlay_version_id = a.overlay_version_id
+  where a.org_id = p_org_id;
+
+  if v_overlay is null then
+    return query
+    select
+      'NO_OP',
+      array['overlay_noop_v0']::text[],
+      jsonb_build_object('note','no_active_overlay');
+    return;
+  end if;
+
+  -- Extract task_type from proposal
+  v_task_type := coalesce(p_proposal #>> '{inputs,task_type}', '');
+
+  -- Deny list
+  v_denied_task_types := v_overlay #> '{deny,
+
+FILE: C:\dev\nfl\test_vectors\nfl_packet_verify_v1\negative\bad_sha256sum_line_0537effea5f535d061b313f72e37ca52d4a34fff00865066c51fa7dff410618a\payload\repo_snapshot\repo_root\tools\pwsh\65_admin_set_org_plan.ps1
+#requires -Version 7.0
+[CmdletBinding()]
+param(
+  [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$OrgId,
+  [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$PlanCode,
+
+  # USER JWT (not service role)
+  [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$AccessToken,
+
+  # must match the JWT subject (auth.uid) for operator console flows
+  [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$OperatorUserId
+)
+
+Set-StrictMode -Version Latest
+$ErrorActionPreference = "Stop"
+
+. (Join-Path $PSScriptRoot "00_env.ps1")
+. (Join-Path $PSScriptRoot "05_http.ps1")
+
+function New-UserAuthHeaders {
+  param([string]$Jwt)
+  return @{
+    "apikey"        = $global:SUPABASE_ANON_KEY
+    "Authorization" = "Bearer $Jwt"
+    "Content-Type"  = "application/json"
+  }
+}
+
+# --- Build request ---
+$headersUser = New-UserAuthHeaders -Jwt $AccessToken
+
+$bodyObj = @{
+  p_org_id           = $OrgId
+  p_plan_code        = $PlanCode
+  p_operator_user_id = $OperatorUserId
+}
+
+$jsonBody = ($bodyObj | ConvertTo-Json -Depth 30)
+
+Write-Verbose ("GI_PPI_ADMIN_SET_ORG_PLAN: org_id={0} plan_code={1} operator_user_id={2}" -f $OrgId, $PlanCode, $OperatorUserId)
+Write-Verbose ("GI_PPI_HTTP: POST {0}" -f $global:GI_PPI_RPC_ADMIN_SET_ORG_PLAN_URI)
+
+Invoke-GiPpiJson -Uri $global:GI_PPI_RPC_ADMIN_SET_ORG_PLAN_URI -Headers $headersUser -JsonBody $jsonBody
+
+
+FILE: C:\dev\nfl\test_vectors\nfl_packet_verify_v1\negative\missing_sha256sums_0537effea5f535d061b313f72e37ca52d4a34fff00865066c51fa7dff410618a\payload\repo_snapshot\repo_root\README.md
+UNREADABLE_DOC
+
+FILE: C:\dev\nfl\test_vectors\nfl_packet_verify_v1\negative\missing_sha256sums_0537effea5f535d061b313f72e37ca52d4a34fff00865066c51fa7dff410618a\payload\repo_snapshot\repo_root\sql\introspection\000_introspect_core_objects.sql
+-- GI/PPI introspection: canonical columns + constraints
+
+select 'governance_policy_versions.columns' as section;
+select column_name, data_type, is_nullable, column_default
+from information_schema.columns
+where table_schema='public' and table_name='governance_policy_versions'
+order by ordinal_position;
+
+select 'governance_policy_rules.columns' as section;
+select column_name, data_type, is_nullable, column_default
+from information_schema.columns
+where table_schema='public' and table_name='governance_policy_rules'
+order by ordinal_position;
+
+select 'governance_evaluations.columns' as section;
+select column_name, data_type, is_nullable, column_default
+from information_schema.columns
+where table_schema='public' and table_name='governance_evaluations'
+order by ordinal_position;
+
+select 'governance_reason_codes.columns' as section;
+select column_name, data_type, is_nullable, column_default
+from information_schema.columns
+where table_schema='public' and table_name='governance_reason_codes'
+order by ordinal_position;
+
+select 'policy_rules.constraints' as section;
+select conname, pg_get_constraintdef(c.oid) as constraint_def
+from pg_constraint c
+join pg_class t on t.oid = c.conrelid
+join pg_namespace n on n.oid = t.relnamespace
+where n.nspname='public' and t.relname='governance_policy_rules'
+order by conname;
+
+select 'graph_edges.constraints' as section;
+select conname, pg_get_constraintdef(c.oid) as constraint_def
+from pg_constraint c
+join pg_class t on t.oid = c.conrelid
+join pg_namespace n on n.oid = t.relnamespace
+where n.nspname='public' and t.relname='governance_policy_rule_graph_edges'
+order by conname;
+
+
+FILE: C:\dev\nfl\test_vectors\nfl_packet_verify_v1\negative\missing_sha256sums_0537effea5f535d061b313f72e37ca52d4a34fff00865066c51fa7dff410618a\payload\repo_snapshot\repo_root\sql\introspection\000_introspect_gi_ppi_objects.sql
+-- GI/PPI INTROSPECTION â€” CANONICAL
+-- Purpose: pull exact schemas/constraints for audit + debugging
+
+select 'governance_policy_versions' as obj, column_name, data_type, is_nullable, column_default
+from information_schema.columns
+where table_schema='public' and table_name='governance_policy_versions'
+order by ordinal_position;
+
+select 'governance_policy_rules' as obj, column_name, data_type, is_nullable, column_default
+from information_schema.columns
+where table_schema='public' and table_name='governance_policy_rules'
+order by ordinal_position;
+
+select 'governance_evaluations' as obj, column_name, data_type, is_nullable, column_default
+from information_schema.columns
+where table_schema='public' and table_name='governance_evaluations'
+order by ordinal_position;
+
+select conname, pg_get_constraintdef(c.oid) as constraint_def
+from pg_constraint c
+join pg_class t on t.oid = c.conrelid
+join pg_namespace n on n.oid = t.relnamespace
+where n.nspname='public'
+  and t.relname in ('governance_policy_versions','governance_policy_rules','governance_evaluations','governance_policy_rule_graph_nodes','governance_policy_rule_graph_edges')
+order by t.relname, conname;
+
+
+FILE: C:\dev\nfl\test_vectors\nfl_packet_verify_v1\negative\missing_sha256sums_0537effea5f535d061b313f72e37ca52d4a34fff00865066c51fa7dff410618a\payload\repo_snapshot\repo_root\sql\migrations\040_introspection_views.sql
+-- 040_introspection_views.sql
+-- Read-only introspection views for operators and auditors.
+
+create or replace view public.v_gi_ppi_policies as
+select
+  policy_version_id,
+  version_name,
+  status,
+  created_at,
+  activated_at,
+  policy_hash_sha256,
+  rule_graph_hash_sha256
+from public.governance_policy_versions
+order by created_at desc;
+
+create or replace view public.v_gi_ppi_active_policy as
+select *
+from public.governance_policy_versions
+where status = 'active'
+order by created_at desc
+limit 1;
+
+create or replace view public.v_gi_ppi_rules as
+select
+  r.policy_version_id,
+  r.rule_id,
+  r.rule_order,
+  r.priority,
+  r.decision,
+  r.reason_code,
+  r.match_note,
+  r.match
+from public.governance_policy_rules r;
+
+create or replace view public.v_gi_ppi_reason_codes as
+select code, severity, description
+from public.governance_reason_codes
+order by code asc;
+
+create or replace view public.v_gi_ppi_latest_evaluations as
+select
+  evaluation_id,
+  policy_version_id,
+  policy_hash_sha256,
+  proposal_hash,
+  proposal_hash_jcs_sha256,
+  proposal_hash_pg_sha256,
+  proposal_canon_hash_sha256,
+  decision,
+  reason_codes,
+  created_at
+from public.governance_evaluations
+order by created_at desc;
+
+grant select on public.v_gi_ppi_policies to anon, authenticated;
+grant select on public.v_gi_ppi_active_policy to anon, authenticated;
+grant select on public.v_gi_ppi_rules to anon, authenticated;
+grant select on public.v_gi_ppi_reason_codes to anon, authenticated;
+grant select on public.v_gi_ppi_latest_evaluations to anon, authenticated;
+
+
+FILE: C:\dev\nfl\test_vectors\nfl_packet_verify_v1\negative\missing_sha256sums_0537effea5f535d061b313f72e37ca52d4a34fff00865066c51fa7dff410618a\payload\repo_snapshot\repo_root\sql\ops\200_org_plan_and_overlay.sql
+-- ============================================================
+-- COVENANT / GI-PPI: ORG PLAN + OVERLAY POLICY (CANONICAL V0)
+-- - plan enforcement
+-- - overlay: append-only versions + hash binding + active pointer
+-- - overlay evaluator: DENY/NO_OP only
+-- - combined eval RPC: canonical eval + overlay diagnostics (immutable)
+-- ============================================================
+
+-- ----------------------------
+-- 1) Plan registry + org plan
+-- ----------------------------
+create table if not exists public.gi_ppi_plan_catalog (
+  plan_code text primary key,
+  description text not null,
+  allow_overlay boolean not null default false,
+  created_at timestamptz not null default now()
+);
+
+insert into public.gi_ppi_plan_catalog (plan_code, description, allow_overlay)
+values
+  ('tier0_instrument', 'Instrument access only (no overlay uploads).', false),
+  ('tier1_curated',    'Instrument + curated overlay governance (DENY/NO_OP only).', true),
+  ('institutional',    'Dedicated institution license. Overlay allowed.', true)
+on conflict (plan_code) do update
+set description = excluded.description,
+    allow_overlay = excluded.allow_overlay;
+
+create table if not exists public.gi_ppi_org_plan (
+  org_id uuid primary key references public.gi_ppi_orgs(org_id) on delete cascade,
+  plan_code text not null references public.gi_ppi_plan_catalog(plan_code),
+  updated_at timestamptz not null default now(),
+  updated_by uuid null
+);
+
+-- RLS
+alter table public.gi_ppi_plan_catalog enable row level security;
+alter table public.gi_ppi_org_plan enable row level security;
+
+-- Public cannot read catalog; authenticated can read catalog if you want (optional).
+drop policy if exists gi_ppi_plan_catalog_no_anon on public.gi_ppi_plan_catalog;
+create policy gi_ppi_plan_catalog_no_anon
+on public.gi_ppi_plan_catalog
+for all
+to anon
+using (false)
+with check (false);
+
+drop policy if exists gi_ppi_plan_catalog_read_auth on public.gi_ppi_plan_catalog;
+create policy gi_ppi_plan_catalog_read_auth
+on public.gi_ppi_plan_catalog
+for select
+to authenticated
+using (true);
+
+-- Org plan: org members can read their org plan; no direct mutations
+drop policy if exists gi_ppi_org_plan_member_read on public.gi_ppi_org_plan;
+create policy gi_ppi_org_plan_member_read
+on public.gi_ppi_org_plan
+for select
+to authenticated
+using (
+  exists (
+    select 1
+    from public.gi_ppi_org_members m
+    where m.org_id = gi_ppi_org_plan.org_id
+      and m.user_id = auth.uid()
+      and m.status = 'active'
+  )
+);
+
+drop policy if exists gi_ppi_org_plan_no_direct_mutation_anon on public.gi_ppi_org_plan;
+create policy gi_ppi_org_plan_no_direct_mutation_anon
+on public.gi_ppi_org_plan
+for all
+to anon
+using (false)
+with check (false);
+
+drop policy if exists gi_ppi_org_plan_no_direct_mutation_auth on public.gi_ppi_org_plan;
+create policy gi_ppi_org_plan_no_direct_mutation_auth
+on public.gi_ppi_org_plan
+for insert, update, delete
+to authenticated
+using (false)
+with check (false);
+
+-- ----------------------------
+-- 2) Overlay tables (append-only versions)
+-- ----------------------------
+create table if not exists public.gi_ppi_org_overlay_versions (
+  overlay_version_id uuid primary key default gen_random_uuid(),
+  org_id uuid not null references public.gi_ppi_orgs(org_id) on delete cascade,
+  overlay_json jsonb not null,
+  overlay_hash_sha256 text not null,
+  created_at timestamptz not null default now(),
+  created_by uuid null
+);
+
+create unique index if not exists ux_gi_ppi_org_overlay_versions_org_hash
+on public.gi_ppi_org_overlay_versions(org_id, overlay_hash_sha256);
+
+-- Append-only guard
+create or replace function public._gi_ppi_overlay_versions_append_only_guard()
+returns trigger
+language plpgsql
+as $$
+begin
+  raise exception 'APPEND_ONLY: mutation forbidden on gi_ppi_org_overlay_versions';
+end;
+$$;
+
+drop trigger if exists trg_gi_ppi_overlay_versions_append_only on public.gi_ppi_org_overlay_versions;
+create trigger trg_gi_ppi_overlay_versions_append_only
+before update or delete on public.gi_ppi_org_overlay_versions
+for each row execute function public._gi_ppi_overlay_versions_append_only_guard();
+
+-- Active pointer (mutable, but audited by history table)
+create table if not exists public.gi_ppi_org_overlay_active (
+  org_id uuid primary key references public.gi_ppi_orgs(org_id) on delete cascade,
+  overlay_version_id uuid not null references public.gi_ppi_org_overlay_versions(overlay_version_id),
+  activated_at timestamptz not null default now(),
+  activated_by uuid null
+);
+
+alter table public.gi_ppi_org_overlay_versions enable row level security;
+alter table public.gi_ppi_org_overlay_active enable row level security;
+
+-- Members can read overlay versions for their org; no direct writes
+drop policy if exists gi_ppi_overlay_versions_member_read on public.gi_ppi_org_overlay_versions;
+create policy gi_ppi_overlay_versions_member_read
+on public.gi_ppi_org_overlay_versions
+for select
+to authenticated
+using (
+  exists (
+    select 1
+    from public.gi_ppi_org_members m
+    where m.org_id = gi_ppi_org_overlay_versions.org_id
+      and m.user_id = auth.uid()
+      and m.status = 'active'
+  )
+);
+
+drop policy if exists gi_ppi_overlay_versions_no_direct_insert_auth on public.gi_ppi_org_overlay_versions;
+create policy gi_ppi_overlay_versions_no_direct_insert_auth
+on public.gi_ppi_org_overlay_versions
+for insert
+to authenticated
+with check (false);
+
+drop policy if exists gi_ppi_overlay_versions_no_direct_insert_anon on public.gi_ppi_org_overlay_versions;
+create policy gi_ppi_overlay_versions_no_direct_insert_anon
+on public.gi_ppi_org_overlay_versions
+for insert
+to anon
+with check (false);
+
+-- Active pointer read allowed to org members; no direct mutation
+drop policy if exists gi_ppi_overlay_active_member_read on public.gi_ppi_org_overlay_active;
+create policy gi_ppi_overlay_active_member_read
+on public.gi_ppi_org_overlay_active
+for select
+to authenticated
+using (
+  exists (
+    select 1
+    from public.gi_ppi_org_members m
+    where m.org_id = gi_ppi_org_overlay_active.org_id
+      and m.user_id = auth.uid()
+      and m.status = 'active'
+  )
+);
+
+drop policy if exists gi_ppi_overlay_active_no_direct_mutation_auth on public.gi_ppi_org_overlay_active;
+create policy gi_ppi_overlay_active_no_direct_mutation_auth
+on public.gi_ppi_org_overlay_active
+for insert, update, delete
+to authenticated
+using (false)
+with check (false);
+
+drop policy if exists gi_ppi_overlay_active_no_direct_mutation_anon on public.gi_ppi_org_overlay_active;
+create policy gi_ppi_overlay_active_no_direct_mutation_anon
+on public.gi_ppi_org_overlay_active
+for all
+to anon
+using (false)
+with check (false);
+
+-- ----------------------------
+-- 3) Helpers: admin require + plan gate
+-- ----------------------------
+create or replace function public._gi_ppi_require_admin()
+returns void
+language plpgsql
+as $$
+begin
+  if auth.uid() is null then
+    raise exception 'AUTH_REQUIRED';
+  end if;
+
+  if not exists (select 1 from public.gi_ppi_admins a where a.user_id = auth.uid()) then
+    raise exception 'ADMIN_REQUIRED';
+  end if;
+end;
+$$;
+
+create or replace function public._gi_ppi_org_allows_overlay(p_org_id uuid)
+returns boolean
+language sql
+stable
+as $$
+  select coalesce(pc.allow_overlay, false)
+  from public.gi_ppi_org_plan op
+  join public.gi_ppi_plan_catalog pc on pc.plan_code = op.plan_code
+  where op.org_id = p_org_id
+$$;
+
+-- ----------------------------
+-- 4) RPC: admin set org plan
+-- ----------------------------
+create or replace function public.gi_ppi_admin_set_org_plan(
+  p_org_id uuid,
+  p_plan_code text,
+  p_operator_user_id uuid
+)
+returns jsonb
+language plpgsql
+security definer
+as $$
+begin
+  perform public._gi_ppi_require_admin();
+
+  if p_operator_user_id is null or p_operator_user_id <> auth.uid() then
+    raise exception 'OPERATOR_MISMATCH';
+  end if;
+
+  if p_org_id is null then raise exception 'INVALID_ORG_ID'; end if;
+  if p_plan_code is null or btrim(p_plan_code) = '' then raise exception 'INVALID_PLAN_CODE'; end if;
+
+  -- upsert org plan
+  insert into public.gi_ppi_org_plan (org_id, plan_code, updated_by)
+  values (p_org_id, p_plan_code, auth.uid())
+  on conflict (org_id) do update
+  set plan_code = excluded.plan_code,
+      updated_at = now(),
+      updated_by = auth.uid();
+
+  return jsonb_build_object('ok', true, 'org_id', p_org_id, 'plan_code', p_plan_code, 'operator_user_id', auth.uid());
+end;
+$$;
+
+grant execute on function public.gi_ppi_admin_set_org_plan(uuid,text,uuid) to authenticated;
+
+-- ----------------------------
+-- 5) RPC: publish overlay (admin only; overlay allowed by plan)
+--    - stores append-only version (hash bound)
+--    - sets active pointer
+-- ----------------------------
+create or replace function public.gi_ppi_admin_publish_overlay(
+  p_org_id uuid,
+  p_overlay_json jsonb,
+  p_overlay_hash_sha256 text,
+  p_operator_user_id uuid
+)
+returns jsonb
+language plpgsql
+security definer
+as $$
+declare
+  v_overlay_version_id uuid;
+  v_allow boolean;
+begin
+  perform public._gi_ppi_require_admin();
+
+  if p_operator_user_id is null or p_operator_user_id <> auth.uid() then
+    raise exception 'OPERATOR_MISMATCH';
+  end if;
+
+  if p_org_id is null then raise exception 'INVALID_ORG_ID'; end if;
+  if p_overlay_json is null then raise exception 'INVALID_OVERLAY_JSON'; end if;
+  if p_overlay_hash_sha256 is null or btrim(p_overlay_hash_sha256) = '' then raise exception 'INVALID_OVERLAY_HASH'; end if;
+
+  v_allow := coalesce(public._gi_ppi_org_allows_overlay(p_org_id), false);
+  if not v_allow then
+    raise exception 'OVERLAY_NOT_ENTITLED';
+  end if;
+
+  insert into public.gi_ppi_org_overlay_versions (org_id, overlay_json, overlay_hash_sha256, created_by)
+  values (p_org_id, p_overlay_json, p_overlay_hash_sha256, auth.uid())
+  on conflict (org_id, overlay_hash_sha256) do update
+  set overlay_json = excluded.overlay_json -- same hash => same content expected; keep id stable per insert attempt
+  returning overlay_version_id into v_overlay_version_id;
+
+  insert into public.gi_ppi_org_overlay_active (org_id, overlay_version_id, activated_by)
+  values (p_org_id, v_overlay_version_id, auth.uid())
+  on conflict (org_id) do update
+  set overlay_version_id = excluded.overlay_version_id,
+      activated_at = now(),
+      activated_by = auth.uid();
+
+  return jsonb_build_object(
+    'ok', true,
+    'org_id', p_org_id,
+    'overlay_version_id', v_overlay_version_id,
+    'overlay_hash_sha256', p_overlay_hash_sha256,
+    'operator_user_id', auth.uid()
+  );
+end;
+$$;
+
+grant execute on function public.gi_ppi_admin_publish_overlay(uuid,jsonb,text,uuid) to authenticated;
+
+-- ----------------------------
+-- 6) Overlay evaluator (DENY / NO_OP only)
+--    Overlay schema: { schema_version, deny: { task_type: [..] } }
+-- ----------------------------
+create or replace function public.gi_ppi_overlay_eval(
+  p_org_id uuid,
+  p_proposal jsonb
+)
+returns table (
+  overlay_decision text,
+  overlay_reason_codes text[],
+  overlay_diagnostics jsonb
+)
+language plpgsql
+stable
+as $$
+declare
+  v_overlay jsonb;
+  v_task_type text;
+  v_denied_task_types jsonb;
+begin
+  -- if no active overlay => NO_OP (we do NOT throw)
+  select ov.overlay_json into v_overlay
+  from public.gi_ppi_org_overlay_active a
+  join public.gi_ppi_org_overlay_versions ov on ov.overlay_version_id = a.overlay_version_id
+  where a.org_id = p_org_id;
+
+  if v_overlay is null then
+    return query
+    select
+      'NO_OP',
+      array['overlay_noop_v0']::text[],
+      jsonb_build_object('note','no_active_overlay');
+    return;
+  end if;
+
+  -- Extract task_type from proposal
+  v_task_type := coalesce(p_proposal #>> '{inputs,task_type}', '');
+
+  -- Deny list
+  v_denied_task_types := v_overlay #> '{deny,
+
+FILE: C:\dev\nfl\test_vectors\nfl_packet_verify_v1\negative\missing_sha256sums_0537effea5f535d061b313f72e37ca52d4a34fff00865066c51fa7dff410618a\payload\repo_snapshot\repo_root\tools\pwsh\65_admin_set_org_plan.ps1
+#requires -Version 7.0
+[CmdletBinding()]
+param(
+  [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$OrgId,
+  [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$PlanCode,
+
+  # USER JWT (not service role)
+  [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$AccessToken,
+
+  # must match the JWT subject (auth.uid) for operator console flows
+  [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$OperatorUserId
+)
+
+Set-StrictMode -Version Latest
+$ErrorActionPreference = "Stop"
+
+. (Join-Path $PSScriptRoot "00_env.ps1")
+. (Join-Path $PSScriptRoot "05_http.ps1")
+
+function New-UserAuthHeaders {
+  param([string]$Jwt)
+  return @{
+    "apikey"        = $global:SUPABASE_ANON_KEY
+    "Authorization" = "Bearer $Jwt"
+    "Content-Type"  = "application/json"
+  }
+}
+
+# --- Build request ---
+$headersUser = New-UserAuthHeaders -Jwt $AccessToken
+
+$bodyObj = @{
+  p_org_id           = $OrgId
+  p_plan_code        = $PlanCode
+  p_operator_user_id = $OperatorUserId
+}
+
+$jsonBody = ($bodyObj | ConvertTo-Json -Depth 30)
+
+Write-Verbose ("GI_PPI_ADMIN_SET_ORG_PLAN: org_id={0} plan_code={1} operator_user_id={2}" -f $OrgId, $PlanCode, $OperatorUserId)
+Write-Verbose ("GI_PPI_HTTP: POST {0}" -f $global:GI_PPI_RPC_ADMIN_SET_ORG_PLAN_URI)
+
+Invoke-GiPpiJson -Uri $global:GI_PPI_RPC_ADMIN_SET_ORG_PLAN_URI -Headers $headersUser -JsonBody $jsonBody
+
+
+FILE: C:\dev\nfl\test_vectors\nfl_packet_verify_v1\negative\missing_sig_0537effea5f535d061b313f72e37ca52d4a34fff00865066c51fa7dff410618a\payload\repo_snapshot\repo_root\README.md
+UNREADABLE_DOC
+
+FILE: C:\dev\nfl\test_vectors\nfl_packet_verify_v1\negative\missing_sig_0537effea5f535d061b313f72e37ca52d4a34fff00865066c51fa7dff410618a\payload\repo_snapshot\repo_root\sql\introspection\000_introspect_core_objects.sql
+-- GI/PPI introspection: canonical columns + constraints
+
+select 'governance_policy_versions.columns' as section;
+select column_name, data_type, is_nullable, column_default
+from information_schema.columns
+where table_schema='public' and table_name='governance_policy_versions'
+order by ordinal_position;
+
+select 'governance_policy_rules.columns' as section;
+select column_name, data_type, is_nullable, column_default
+from information_schema.columns
+where table_schema='public' and table_name='governance_policy_rules'
+order by ordinal_position;
+
+select 'governance_evaluations.columns' as section;
+select column_name, data_type, is_nullable, column_default
+from information_schema.columns
+where table_schema='public' and table_name='governance_evaluations'
+order by ordinal_position;
+
+select 'governance_reason_codes.columns' as section;
+select column_name, data_type, is_nullable, column_default
+from information_schema.columns
+where table_schema='public' and table_name='governance_reason_codes'
+order by ordinal_position;
+
+select 'policy_rules.constraints' as section;
+select conname, pg_get_constraintdef(c.oid) as constraint_def
+from pg_constraint c
+join pg_class t on t.oid = c.conrelid
+join pg_namespace n on n.oid = t.relnamespace
+where n.nspname='public' and t.relname='governance_policy_rules'
+order by conname;
+
+select 'graph_edges.constraints' as section;
+select conname, pg_get_constraintdef(c.oid) as constraint_def
+from pg_constraint c
+join pg_class t on t.oid = c.conrelid
+join pg_namespace n on n.oid = t.relnamespace
+where n.nspname='public' and t.relname='governance_policy_rule_graph_edges'
+order by conname;
+
+
+FILE: C:\dev\nfl\test_vectors\nfl_packet_verify_v1\negative\missing_sig_0537effea5f535d061b313f72e37ca52d4a34fff00865066c51fa7dff410618a\payload\repo_snapshot\repo_root\sql\introspection\000_introspect_gi_ppi_objects.sql
+-- GI/PPI INTROSPECTION â€” CANONICAL
+-- Purpose: pull exact schemas/constraints for audit + debugging
+
+select 'governance_policy_versions' as obj, column_name, data_type, is_nullable, column_default
+from information_schema.columns
+where table_schema='public' and table_name='governance_policy_versions'
+order by ordinal_position;
+
+select 'governance_policy_rules' as obj, column_name, data_type, is_nullable, column_default
+from information_schema.columns
+where table_schema='public' and table_name='governance_policy_rules'
+order by ordinal_position;
+
+select 'governance_evaluations' as obj, column_name, data_type, is_nullable, column_default
+from information_schema.columns
+where table_schema='public' and table_name='governance_evaluations'
+order by ordinal_position;
+
+select conname, pg_get_constraintdef(c.oid) as constraint_def
+from pg_constraint c
+join pg_class t on t.oid = c.conrelid
+join pg_namespace n on n.oid = t.relnamespace
+where n.nspname='public'
+  and t.relname in ('governance_policy_versions','governance_policy_rules','governance_evaluations','governance_policy_rule_graph_nodes','governance_policy_rule_graph_edges')
+order by t.relname, conname;
+
+
+FILE: C:\dev\nfl\test_vectors\nfl_packet_verify_v1\negative\missing_sig_0537effea5f535d061b313f72e37ca52d4a34fff00865066c51fa7dff410618a\payload\repo_snapshot\repo_root\sql\migrations\040_introspection_views.sql
+-- 040_introspection_views.sql
+-- Read-only introspection views for operators and auditors.
+
+create or replace view public.v_gi_ppi_policies as
+select
+  policy_version_id,
+  version_name,
+  status,
+  created_at,
+  activated_at,
+  policy_hash_sha256,
+  rule_graph_hash_sha256
+from public.governance_policy_versions
+order by created_at desc;
+
+create or replace view public.v_gi_ppi_active_policy as
+select *
+from public.governance_policy_versions
+where status = 'active'
+order by created_at desc
+limit 1;
+
+create or replace view public.v_gi_ppi_rules as
+select
+  r.policy_version_id,
+  r.rule_id,
+  r.rule_order,
+  r.priority,
+  r.decision,
+  r.reason_code,
+  r.match_note,
+  r.match
+from public.governance_policy_rules r;
+
+create or replace view public.v_gi_ppi_reason_codes as
+select code, severity, description
+from public.governance_reason_codes
+order by code asc;
+
+create or replace view public.v_gi_ppi_latest_evaluations as
+select
+  evaluation_id,
+  policy_version_id,
+  policy_hash_sha256,
+  proposal_hash,
+  proposal_hash_jcs_sha256,
+  proposal_hash_pg_sha256,
+  proposal_canon_hash_sha256,
+  decision,
+  reason_codes,
+  created_at
+from public.governance_evaluations
+order by created_at desc;
+
+grant select on public.v_gi_ppi_policies to anon, authenticated;
+grant select on public.v_gi_ppi_active_policy to anon, authenticated;
+grant select on public.v_gi_ppi_rules to anon, authenticated;
+grant select on public.v_gi_ppi_reason_codes to anon, authenticated;
+grant select on public.v_gi_ppi_latest_evaluations to anon, authenticated;
+
+
+FILE: C:\dev\nfl\test_vectors\nfl_packet_verify_v1\negative\missing_sig_0537effea5f535d061b313f72e37ca52d4a34fff00865066c51fa7dff410618a\payload\repo_snapshot\repo_root\sql\ops\200_org_plan_and_overlay.sql
+-- ============================================================
+-- COVENANT / GI-PPI: ORG PLAN + OVERLAY POLICY (CANONICAL V0)
+-- - plan enforcement
+-- - overlay: append-only versions + hash binding + active pointer
+-- - overlay evaluator: DENY/NO_OP only
+-- - combined eval RPC: canonical eval + overlay diagnostics (immutable)
+-- ============================================================
+
+-- ----------------------------
+-- 1) Plan registry + org plan
+-- ----------------------------
+create table if not exists public.gi_ppi_plan_catalog (
+  plan_code text primary key,
+  description text not null,
+  allow_overlay boolean not null default false,
+  created_at timestamptz not null default now()
+);
+
+insert into public.gi_ppi_plan_catalog (plan_code, description, allow_overlay)
+values
+  ('tier0_instrument', 'Instrument access only (no overlay uploads).', false),
+  ('tier1_curated',    'Instrument + curated overlay governance (DENY/NO_OP only).', true),
+  ('institutional',    'Dedicated institution license. Overlay allowed.', true)
+on conflict (plan_code) do update
+set description = excluded.description,
+    allow_overlay = excluded.allow_overlay;
+
+create table if not exists public.gi_ppi_org_plan (
+  org_id uuid primary key references public.gi_ppi_orgs(org_id) on delete cascade,
+  plan_code text not null references public.gi_ppi_plan_catalog(plan_code),
+  updated_at timestamptz not null default now(),
+  updated_by uuid null
+);
+
+-- RLS
+alter table public.gi_ppi_plan_catalog enable row level security;
+alter table public.gi_ppi_org_plan enable row level security;
+
+-- Public cannot read catalog; authenticated can read catalog if you want (optional).
+drop policy if exists gi_ppi_plan_catalog_no_anon on public.gi_ppi_plan_catalog;
+create policy gi_ppi_plan_catalog_no_anon
+on public.gi_ppi_plan_catalog
+for all
+to anon
+using (false)
+with check (false);
+
+drop policy if exists gi_ppi_plan_catalog_read_auth on public.gi_ppi_plan_catalog;
+create policy gi_ppi_plan_catalog_read_auth
+on public.gi_ppi_plan_catalog
+for select
+to authenticated
+using (true);
+
+-- Org plan: org members can read their org plan; no direct mutations
+drop policy if exists gi_ppi_org_plan_member_read on public.gi_ppi_org_plan;
+create policy gi_ppi_org_plan_member_read
+on public.gi_ppi_org_plan
+for select
+to authenticated
+using (
+  exists (
+    select 1
+    from public.gi_ppi_org_members m
+    where m.org_id = gi_ppi_org_plan.org_id
+      and m.user_id = auth.uid()
+      and m.status = 'active'
+  )
+);
+
+drop policy if exists gi_ppi_org_plan_no_direct_mutation_anon on public.gi_ppi_org_plan;
+create policy gi_ppi_org_plan_no_direct_mutation_anon
+on public.gi_ppi_org_plan
+for all
+to anon
+using (false)
+with check (false);
+
+drop policy if exists gi_ppi_org_plan_no_direct_mutation_auth on public.gi_ppi_org_plan;
+create policy gi_ppi_org_plan_no_direct_mutation_auth
+on public.gi_ppi_org_plan
+for insert, update, delete
+to authenticated
+using (false)
+with check (false);
+
+-- ----------------------------
+-- 2) Overlay tables (append-only versions)
+-- ----------------------------
+create table if not exists public.gi_ppi_org_overlay_versions (
+  overlay_version_id uuid primary key default gen_random_uuid(),
+  org_id uuid not null references public.gi_ppi_orgs(org_id) on delete cascade,
+  overlay_json jsonb not null,
+  overlay_hash_sha256 text not null,
+  created_at timestamptz not null default now(),
+  created_by uuid null
+);
+
+create unique index if not exists ux_gi_ppi_org_overlay_versions_org_hash
+on public.gi_ppi_org_overlay_versions(org_id, overlay_hash_sha256);
+
+-- Append-only guard
+create or replace function public._gi_ppi_overlay_versions_append_only_guard()
+returns trigger
+language plpgsql
+as $$
+begin
+  raise exception 'APPEND_ONLY: mutation forbidden on gi_ppi_org_overlay_versions';
+end;
+$$;
+
+drop trigger if exists trg_gi_ppi_overlay_versions_append_only on public.gi_ppi_org_overlay_versions;
+create trigger trg_gi_ppi_overlay_versions_append_only
+before update or delete on public.gi_ppi_org_overlay_versions
+for each row execute function public._gi_ppi_overlay_versions_append_only_guard();
+
+-- Active pointer (mutable, but audited by history table)
+create table if not exists public.gi_ppi_org_overlay_active (
+  org_id uuid primary key references public.gi_ppi_orgs(org_id) on delete cascade,
+  overlay_version_id uuid not null references public.gi_ppi_org_overlay_versions(overlay_version_id),
+  activated_at timestamptz not null default now(),
+  activated_by uuid null
+);
+
+alter table public.gi_ppi_org_overlay_versions enable row level security;
+alter table public.gi_ppi_org_overlay_active enable row level security;
+
+-- Members can read overlay versions for their org; no direct writes
+drop policy if exists gi_ppi_overlay_versions_member_read on public.gi_ppi_org_overlay_versions;
+create policy gi_ppi_overlay_versions_member_read
+on public.gi_ppi_org_overlay_versions
+for select
+to authenticated
+using (
+  exists (
+    select 1
+    from public.gi_ppi_org_members m
+    where m.org_id = gi_ppi_org_overlay_versions.org_id
+      and m.user_id = auth.uid()
+      and m.status = 'active'
+  )
+);
+
+drop policy if exists gi_ppi_overlay_versions_no_direct_insert_auth on public.gi_ppi_org_overlay_versions;
+create policy gi_ppi_overlay_versions_no_direct_insert_auth
+on public.gi_ppi_org_overlay_versions
+for insert
+to authenticated
+with check (false);
+
+drop policy if exists gi_ppi_overlay_versions_no_direct_insert_anon on public.gi_ppi_org_overlay_versions;
+create policy gi_ppi_overlay_versions_no_direct_insert_anon
+on public.gi_ppi_org_overlay_versions
+for insert
+to anon
+with check (false);
+
+-- Active pointer read allowed to org members; no direct mutation
+drop policy if exists gi_ppi_overlay_active_member_read on public.gi_ppi_org_overlay_active;
+create policy gi_ppi_overlay_active_member_read
+on public.gi_ppi_org_overlay_active
+for select
+to authenticated
+using (
+  exists (
+    select 1
+    from public.gi_ppi_org_members m
+    where m.org_id = gi_ppi_org_overlay_active.org_id
+      and m.user_id = auth.uid()
+      and m.status = 'active'
+  )
+);
+
+drop policy if exists gi_ppi_overlay_active_no_direct_mutation_auth on public.gi_ppi_org_overlay_active;
+create policy gi_ppi_overlay_active_no_direct_mutation_auth
+on public.gi_ppi_org_overlay_active
+for insert, update, delete
+to authenticated
+using (false)
+with check (false);
+
+drop policy if exists gi_ppi_overlay_active_no_direct_mutation_anon on public.gi_ppi_org_overlay_active;
+create policy gi_ppi_overlay_active_no_direct_mutation_anon
+on public.gi_ppi_org_overlay_active
+for all
+to anon
+using (false)
+with check (false);
+
+-- ----------------------------
+-- 3) Helpers: admin require + plan gate
+-- ----------------------------
+create or replace function public._gi_ppi_require_admin()
+returns void
+language plpgsql
+as $$
+begin
+  if auth.uid() is null then
+    raise exception 'AUTH_REQUIRED';
+  end if;
+
+  if not exists (select 1 from public.gi_ppi_admins a where a.user_id = auth.uid()) then
+    raise exception 'ADMIN_REQUIRED';
+  end if;
+end;
+$$;
+
+create or replace function public._gi_ppi_org_allows_overlay(p_org_id uuid)
+returns boolean
+language sql
+stable
+as $$
+  select coalesce(pc.allow_overlay, false)
+  from public.gi_ppi_org_plan op
+  join public.gi_ppi_plan_catalog pc on pc.plan_code = op.plan_code
+  where op.org_id = p_org_id
+$$;
+
+-- ----------------------------
+-- 4) RPC: admin set org plan
+-- ----------------------------
+create or replace function public.gi_ppi_admin_set_org_plan(
+  p_org_id uuid,
+  p_plan_code text,
+  p_operator_user_id uuid
+)
+returns jsonb
+language plpgsql
+security definer
+as $$
+begin
+  perform public._gi_ppi_require_admin();
+
+  if p_operator_user_id is null or p_operator_user_id <> auth.uid() then
+    raise exception 'OPERATOR_MISMATCH';
+  end if;
+
+  if p_org_id is null then raise exception 'INVALID_ORG_ID'; end if;
+  if p_plan_code is null or btrim(p_plan_code) = '' then raise exception 'INVALID_PLAN_CODE'; end if;
+
+  -- upsert org plan
+  insert into public.gi_ppi_org_plan (org_id, plan_code, updated_by)
+  values (p_org_id, p_plan_code, auth.uid())
+  on conflict (org_id) do update
+  set plan_code = excluded.plan_code,
+      updated_at = now(),
+      updated_by = auth.uid();
+
+  return jsonb_build_object('ok', true, 'org_id', p_org_id, 'plan_code', p_plan_code, 'operator_user_id', auth.uid());
+end;
+$$;
+
+grant execute on function public.gi_ppi_admin_set_org_plan(uuid,text,uuid) to authenticated;
+
+-- ----------------------------
+-- 5) RPC: publish overlay (admin only; overlay allowed by plan)
+--    - stores append-only version (hash bound)
+--    - sets active pointer
+-- ----------------------------
+create or replace function public.gi_ppi_admin_publish_overlay(
+  p_org_id uuid,
+  p_overlay_json jsonb,
+  p_overlay_hash_sha256 text,
+  p_operator_user_id uuid
+)
+returns jsonb
+language plpgsql
+security definer
+as $$
+declare
+  v_overlay_version_id uuid;
+  v_allow boolean;
+begin
+  perform public._gi_ppi_require_admin();
+
+  if p_operator_user_id is null or p_operator_user_id <> auth.uid() then
+    raise exception 'OPERATOR_MISMATCH';
+  end if;
+
+  if p_org_id is null then raise exception 'INVALID_ORG_ID'; end if;
+  if p_overlay_json is null then raise exception 'INVALID_OVERLAY_JSON'; end if;
+  if p_overlay_hash_sha256 is null or btrim(p_overlay_hash_sha256) = '' then raise exception 'INVALID_OVERLAY_HASH'; end if;
+
+  v_allow := coalesce(public._gi_ppi_org_allows_overlay(p_org_id), false);
+  if not v_allow then
+    raise exception 'OVERLAY_NOT_ENTITLED';
+  end if;
+
+  insert into public.gi_ppi_org_overlay_versions (org_id, overlay_json, overlay_hash_sha256, created_by)
+  values (p_org_id, p_overlay_json, p_overlay_hash_sha256, auth.uid())
+  on conflict (org_id, overlay_hash_sha256) do update
+  set overlay_json = excluded.overlay_json -- same hash => same content expected; keep id stable per insert attempt
+  returning overlay_version_id into v_overlay_version_id;
+
+  insert into public.gi_ppi_org_overlay_active (org_id, overlay_version_id, activated_by)
+  values (p_org_id, v_overlay_version_id, auth.uid())
+  on conflict (org_id) do update
+  set overlay_version_id = excluded.overlay_version_id,
+      activated_at = now(),
+      activated_by = auth.uid();
+
+  return jsonb_build_object(
+    'ok', true,
+    'org_id', p_org_id,
+    'overlay_version_id', v_overlay_version_id,
+    'overlay_hash_sha256', p_overlay_hash_sha256,
+    'operator_user_id', auth.uid()
+  );
+end;
+$$;
+
+grant execute on function public.gi_ppi_admin_publish_overlay(uuid,jsonb,text,uuid) to authenticated;
+
+-- ----------------------------
+-- 6) Overlay evaluator (DENY / NO_OP only)
+--    Overlay schema: { schema_version, deny: { task_type: [..] } }
+-- ----------------------------
+create or replace function public.gi_ppi_overlay_eval(
+  p_org_id uuid,
+  p_proposal jsonb
+)
+returns table (
+  overlay_decision text,
+  overlay_reason_codes text[],
+  overlay_diagnostics jsonb
+)
+language plpgsql
+stable
+as $$
+declare
+  v_overlay jsonb;
+  v_task_type text;
+  v_denied_task_types jsonb;
+begin
+  -- if no active overlay => NO_OP (we do NOT throw)
+  select ov.overlay_json into v_overlay
+  from public.gi_ppi_org_overlay_active a
+  join public.gi_ppi_org_overlay_versions ov on ov.overlay_version_id = a.overlay_version_id
+  where a.org_id = p_org_id;
+
+  if v_overlay is null then
+    return query
+    select
+      'NO_OP',
+      array['overlay_noop_v0']::text[],
+      jsonb_build_object('note','no_active_overlay');
+    return;
+  end if;
+
+  -- Extract task_type from proposal
+  v_task_type := coalesce(p_proposal #>> '{inputs,task_type}', '');
+
+  -- Deny list
+  v_denied_task_types := v_overlay #> '{deny,
+
+FILE: C:\dev\nfl\test_vectors\nfl_packet_verify_v1\negative\missing_sig_0537effea5f535d061b313f72e37ca52d4a34fff00865066c51fa7dff410618a\payload\repo_snapshot\repo_root\tools\pwsh\65_admin_set_org_plan.ps1
+#requires -Version 7.0
+[CmdletBinding()]
+param(
+  [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$OrgId,
+  [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$PlanCode,
+
+  # USER JWT (not service role)
+  [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$AccessToken,
+
+  # must match the JWT subject (auth.uid) for operator console flows
+  [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$OperatorUserId
+)
+
+Set-StrictMode -Version Latest
+$ErrorActionPreference = "Stop"
+
+. (Join-Path $PSScriptRoot "00_env.ps1")
+. (Join-Path $PSScriptRoot "05_http.ps1")
+
+function New-UserAuthHeaders {
+  param([string]$Jwt)
+  return @{
+    "apikey"        = $global:SUPABASE_ANON_KEY
+    "Authorization" = "Bearer $Jwt"
+    "Content-Type"  = "application/json"
+  }
+}
+
+# --- Build request ---
+$headersUser = New-UserAuthHeaders -Jwt $AccessToken
+
+$bodyObj = @{
+  p_org_id           = $OrgId
+  p_plan_code        = $PlanCode
+  p_operator_user_id = $OperatorUserId
+}
+
+$jsonBody = ($bodyObj | ConvertTo-Json -Depth 30)
+
+Write-Verbose ("GI_PPI_ADMIN_SET_ORG_PLAN: org_id={0} plan_code={1} operator_user_id={2}" -f $OrgId, $PlanCode, $OperatorUserId)
+Write-Verbose ("GI_PPI_HTTP: POST {0}" -f $global:GI_PPI_RPC_ADMIN_SET_ORG_PLAN_URI)
+
+Invoke-GiPpiJson -Uri $global:GI_PPI_RPC_ADMIN_SET_ORG_PLAN_URI -Headers $headersUser -JsonBody $jsonBody
+

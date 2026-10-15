@@ -63,7 +63,7 @@ function StartChild([string]$FileName,[string]$Arguments){
 }
 
 $RepoRoot = (Resolve-Path -LiteralPath $RepoRoot).Path
-$PSExe = (Get-Command powershell.exe -ErrorAction Stop).Source
+$PSExe = (Get-Process -Id $PID).Path
 $Script = Join-Path $RepoRoot "scripts\nfl_ledger_checkpoint_v1.ps1"
 if(-not (Test-Path -LiteralPath $Script -PathType Leaf)){ Fail ("MISSING_SCRIPT:" + $Script) }
 

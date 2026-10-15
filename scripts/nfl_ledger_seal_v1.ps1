@@ -30,6 +30,7 @@ param(
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
+. (Join-Path $PSScriptRoot "_lib_nfl_v1.ps1")  # host-independent JSON + core canon
 
 $GENESIS = "nfl.ledger.chain.v1"
 
@@ -88,7 +89,7 @@ function ResolveBundleAuthorized([string]$BundlePath,[string]$Ns){
   # Returns @{ authorized = @(@{principal;pub}); cores = @(all key-cores) } from a
   # neverlost.trust_bundle.v1 file: authorized = keys whose namespaces include $Ns.
   # Plain arrays throughout (robust in PS 5.1 StrictMode).
-  $b = (Get-Content -LiteralPath $BundlePath -Raw) | ConvertFrom-Json
+  $b = ConvertFrom-NflJson (Get-Content -LiteralPath $BundlePath -Raw)
   if([string](GetProp $b "schema") -ne "neverlost.trust_bundle.v1"){ Fail ("TRUST_BUNDLE_BAD_SCHEMA:" + [string](GetProp $b "schema")) }
   $authorized = @()
   $cores = @()
@@ -113,7 +114,7 @@ if([string]::IsNullOrWhiteSpace($SigningKeyPath)){ $SigningKeyPath = Join-Path $
 
 if(-not (Test-Path -LiteralPath $Ledger -PathType Leaf)){ Fail ("LEDGER_MISSING:" + $Ledger) }
 
-$ssh = Get-Command ssh-keygen.exe -ErrorAction SilentlyContinue
+$ssh = Get-Command @("ssh-keygen.exe","ssh-keygen") -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
 if($null -eq $ssh){ Fail "SSH_KEYGEN_MISSING" }
 
 # ---- ledger chain (identical algo to checkpoint script) -------------
@@ -127,8 +128,8 @@ function LoadRecHashes(){
     $t = $ln.Trim()
     if($t.Length -eq 0){ continue }
     $o = $null
-    try { $o = $t | ConvertFrom-Json } catch { Fail "BAD_JSON_LINE" }
-    $canon = ([ordered]@{ hash=[string](GetProp $o "hash"); artifact=(GetProp $o "artifact"); timestamp=[string](GetProp $o "timestamp") } | ConvertTo-Json -Compress)
+    try { $o = ConvertFrom-NflJson $t } catch { Fail "BAD_JSON_LINE" }
+    $canon = Get-NflCoreCanon $o
     $out.Add((Sha256HexOfString $canon)) | Out-Null
   }
   return ,$out
@@ -176,7 +177,7 @@ if($Mode -eq "seal"){
   if(-not (Test-Path -LiteralPath $CkptLog -PathType Leaf)){ Fail "NO_CHECKPOINT" }
   $ckLines = @((Get-Content -LiteralPath $CkptLog -Encoding UTF8) | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
   if($ckLines.Count -eq 0){ Fail "EMPTY_CHECKPOINT_LOG" }
-  $ck = $ckLines[$ckLines.Count-1] | ConvertFrom-Json
+  $ck = ConvertFrom-NflJson $ckLines[$ckLines.Count-1]
 
   $head     = [string]$ck.head
   $count    = [int]$ck.count
@@ -258,7 +259,7 @@ if($Mode -eq "verify-seal"){
   foreach($p in @($sealJson,$payloadPath,$sigPath,$allowed)){
     if(-not (Test-Path -LiteralPath $p -PathType Leaf)){ Fail ("SEAL_SURFACE_MISSING:" + $p) }
   }
-  $seal = Get-Content -LiteralPath $sealJson -Raw | ConvertFrom-Json
+  $seal = ConvertFrom-NflJson (Get-Content -LiteralPath $sealJson -Raw)
   $sealedHead  = [string]$seal.head
   $sealedCount = [int]$seal.count
   $identity    = [string]$seal.signer_identity
@@ -277,7 +278,7 @@ if($Mode -eq "verify-seal"){
       $bundleSig = $TrustBundlePath + ".sig"
       if(-not (Test-Path -LiteralPath $bundleSig -PathType Leaf)){ Fail ("BUNDLE_SIG_MISSING:" + $bundleSig) }
       $rootPub = ([System.IO.File]::ReadAllText($RootPubPath,(Utf8NoBom))).Trim()
-      $tmpRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("nfl_root_allowed_" + [Guid]::NewGuid().ToString("N") + ".txt")
+      EnsureDir (Join-Path $RepoRoot "proofs\_tmp"); $tmpRoot = Join-Path (Join-Path $RepoRoot "proofs\_tmp") ("nfl_root_allowed_" + [Guid]::NewGuid().ToString("N") + ".txt")
       WriteUtf8NoBomLfText $tmpRoot ("neverlost.root " + $rootPub + "`n")
       try {
         $rb = VerifySignature $tmpRoot "neverlost.root" $BundleNamespace $bundleSig $TrustBundlePath
@@ -285,13 +286,16 @@ if($Mode -eq "verify-seal"){
         if(Test-Path -LiteralPath $tmpRoot -PathType Leaf){ Remove-Item -LiteralPath $tmpRoot -Force -ErrorAction SilentlyContinue }
       }
       if($rb.code -ne 0){
+        [void](Write-NflOwnIntegrationReceipt -RepoRoot $RepoRoot -Provider "neverlost" -Contract "neverlost.trust_bundle.v1" -ResponseSha256 (Get-NflSha256File $TrustBundlePath) -Outcome "refused" -ErrorToken "BUNDLE_SIG_INVALID")
         Write-Output "NFL_LEDGER_SEAL_VERIFY_FAIL:BUNDLE_SIG_INVALID"
         Write-Output ("SSHKEYGEN_STDERR=" + ($rb.err.Trim()))
         exit 1
       }
       Write-Output ("BUNDLE_SIG_OK root=" + $RootPubPath + " ns=" + $BundleNamespace)
+      [void](Write-NflOwnIntegrationReceipt -RepoRoot $RepoRoot -Provider "neverlost" -Contract "neverlost.trust_bundle.v1" -ResponseSha256 (Get-NflSha256File $TrustBundlePath) -Outcome "ok")
     } else {
       Write-Output "WARNING: BUNDLE_UNVERIFIED (no -RootPubPath; bundle contents trusted on faith)"
+      [void](Write-NflOwnIntegrationReceipt -RepoRoot $RepoRoot -Provider "neverlost" -Contract "neverlost.trust_bundle.v1" -ResponseSha256 (Get-NflSha256File $TrustBundlePath) -Outcome "unknown" -ErrorToken "BUNDLE_UNVERIFIED")
     }
 
     try {
@@ -300,7 +304,7 @@ if($Mode -eq "verify-seal"){
       $allCores = @($resolved.cores)
       $r = $null
       foreach($cand in $authorized){
-        $tmpAllowed = Join-Path ([System.IO.Path]::GetTempPath()) ("nfl_bundle_allowed_" + [Guid]::NewGuid().ToString("N") + ".txt")
+        EnsureDir (Join-Path $RepoRoot "proofs\_tmp"); $tmpAllowed = Join-Path (Join-Path $RepoRoot "proofs\_tmp") ("nfl_bundle_allowed_" + [Guid]::NewGuid().ToString("N") + ".txt")
         WriteUtf8NoBomLfText $tmpAllowed ([string]$cand.principal + " " + [string]$cand.pub + "`n")
         try {
           $try = VerifySignature $tmpAllowed ([string]$cand.principal) $ns $sigPath $payloadPath
@@ -330,7 +334,7 @@ if($Mode -eq "verify-seal"){
     if([string]::IsNullOrWhiteSpace($TrustedPubPath)){ $TrustedPubPath = Join-Path $RepoRoot "proofs\keys\id_ed25519.pub" }
     if(-not (Test-Path -LiteralPath $TrustedPubPath -PathType Leaf)){ Fail ("TRUSTED_PUB_MISSING:" + $TrustedPubPath) }
     $trustedPub = ([System.IO.File]::ReadAllText($TrustedPubPath,(Utf8NoBom))).Trim()
-    $tmpAllowed = Join-Path ([System.IO.Path]::GetTempPath()) ("nfl_seal_allowed_" + [Guid]::NewGuid().ToString("N") + ".txt")
+    EnsureDir (Join-Path $RepoRoot "proofs\_tmp"); $tmpAllowed = Join-Path (Join-Path $RepoRoot "proofs\_tmp") ("nfl_seal_allowed_" + [Guid]::NewGuid().ToString("N") + ".txt")
     WriteUtf8NoBomLfText $tmpAllowed ($identity + " " + $trustedPub + "`n")
     try {
       $r = VerifySignature $tmpAllowed $identity $ns $sigPath $payloadPath

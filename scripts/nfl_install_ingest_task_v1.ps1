@@ -36,7 +36,7 @@ if(-not (Test-Path -LiteralPath $PSExe -PathType Leaf)){ Fail ("PSEXE_MISSING:" 
 if(-not (Test-Path -LiteralPath $SchTasks -PathType Leaf)){ Fail ("SCHTASKS_MISSING:" + $SchTasks) }
 if(-not (Test-Path -LiteralPath $WScriptExe -PathType Leaf)){ Fail ("WSCRIPT_MISSING:" + $WScriptExe) }
 
-$RuntimeDir = "C:\nflrt"
+$RuntimeDir = Join-Path $RepoRoot "runtime\scheduler"
 Ensure-Dir $RuntimeDir
 
 $VbsPath = Join-Path $RuntimeDir "run_ingest_hidden.vbs"

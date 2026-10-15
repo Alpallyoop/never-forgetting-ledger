@@ -1,0 +1,7 @@
+NFL_PACKET_LAW_MOVED_TO_CPR
+At C:\dev\nfl\scripts\verify_packet_v1.ps1:1 char:1
++ throw "NFL_PACKET_LAW_MOVED_TO_CPR"
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : OperationStopped: (NFL_PACKET_LAW_MOVED_TO_CPR:String) [], RuntimeException
+    + FullyQualifiedErrorId : NFL_PACKET_LAW_MOVED_TO_CPR
+ 

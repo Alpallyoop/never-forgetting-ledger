@@ -1,0 +1,6 @@
+PIE REPO SCAN DIFF
+project=nfl
+repo=C:\dev\nfl
+scan=20260507_200928_896
+
+BASELINE_SCAN_NO_PREVIOUS

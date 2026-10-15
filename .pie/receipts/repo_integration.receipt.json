@@ -1,0 +1,9 @@
+{
+    "schema":  "pie.repo.integration.receipt.v1",
+    "project":  "nfl",
+    "target_repo":  "C:\\dev\\nfl",
+    "pie_root":  "C:\\dev\\nfl\\.pie",
+    "status":  "integrated",
+    "suggested_language":  "PowerShell 5.1",
+    "created_utc":  "2026-05-07T22:10:41.4868243Z"
+}

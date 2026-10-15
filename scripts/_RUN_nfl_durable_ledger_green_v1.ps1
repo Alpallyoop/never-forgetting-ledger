@@ -47,7 +47,7 @@ function AssertSuccess([string]$Name,$R,[string]$Needle){
 }
 
 $RepoRoot = (Resolve-Path -LiteralPath $RepoRoot).Path
-$PSExe = (Get-Command powershell.exe -ErrorAction Stop).Source
+$PSExe = (Get-Process -Id $PID).Path
 
 $Ckpt      = Join-Path $RepoRoot "scripts\nfl_ledger_checkpoint_v1.ps1"
 $CkptTest  = Join-Path $RepoRoot "scripts\_selftest_nfl_ledger_checkpoint_v1.ps1"

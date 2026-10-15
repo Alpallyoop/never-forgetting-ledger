@@ -1,0 +1,277 @@
+# Deterministic Repo Facts
+
+project=nfl
+repo=C:\dev\nfl
+file_count=1998
+
+## README.md excerpt
+\# Never Forgetting Ledger (NFL)
+
+
+
+Never Forgetting Ledger (NFL) is a permanent integrity ledger for cryptographic hashes.
+
+
+
+It allows systems and users to:
+
+\- commit a hash once
+
+\- store it with a timestamp
+
+\- look it up or verify it at any time
+
+
+
+NFL ensures that important hashes are never lost and can always be independently verified.
+
+
+
+\---
+
+
+
+\## What NFL Does
+
+
+
+NFL provides three core operations:
+
+
+
+\- \*\*Commit\*\* â†’ store a hash with metadata  
+
+\- \*\*Lookup\*\* â†’ retrieve a previously committed record  
+
+\- \*\*Verify\*\* â†’ hash a file and check if it exists in the ledger  
+
+
+
+Deterministic result tokens:
+
+
+
+```text
+
+COMMIT\_OK
+
+FOUND
+
+NOT\_FOUND
+
+VERIFIED
+
+Quickstart
+
+
+
+Start the API:
+
+
+
+powershell.exe -NoProfile -ExecutionPolicy Bypass `
+
+&#x20; -File scripts\\nfl\_api\_v1.ps1 `
+
+&#x20; -RepoRoot . `
+
+&#x20; -Prefix "http://127.0.0.1:8085/"
+
+
+
+Test lookup:
+
+
+
+Invoke-RestMethod -Method Get `
+
+&#x20; -Uri "http://127.0.0.1:8085/lookup?hash=abc123"
+
+
+
+Full API usage:
+
+
+
+docs/NFL\_API\_QUICKSTART.md
+
+API Overview
+
+Commit
+
+POST /commit
+
+Lookup
+
+GET /lookup?hash=<hash>
+
+Verify
+
+POST /verify
+
+CLI Usage
+
+scripts\\nfl\_cli\_v1.ps1
+
+
+
+Commit:
+
+
+
+.\\scripts\\nfl\_cli\_v1.ps1 commit -Hash "abc123" -Artifact "test"
+
+
+
+Lookup:
+
+
+
+.\\scripts\\nfl\_cli\_v1.ps1 lookup -Hash "abc123"
+
+
+
+Verify:
+
+
+
+.\\scripts\\nfl\_cli\_v1.ps1 verify -File "C:\\Windows\\notepad.exe"
+
+System Role
+
+
+
+NFL is a witness-only system.
+
+
+
+It:
+
+
+
+records hashes
+
+timestamps events
+
+returns deterministic results
+
+
+
+It does not:
+
+
+
+decide trust
+
+enforce policy
+
+define truth
+
+
+
+It only answers:
+
+
+
+"Has this hash been seen before?"
+
+Tier-0 Status
+
+
+
+Tier-0 is complete and frozen.
+
+
+
+Canonical documents
+
+docs/NFL\_TIER0\_LOCK.md
+
+docs/NFL\_CANONICAL\_STATUS.md
+
+Frozen evidence
+
+test\_vectors/tier0\_frozen/nfl\_tier0\_green\_20260307
+
+Canonical tags
+
+nfl-tier0-green-20260307
+
+nfl-tier0-release-hygiene-20260307
+
+Public Surface
+
+scripts/verify\_packet\_v1.ps1
+
+scripts/selftest\_verify\_packet\_v1.ps1
+
+scripts/selftest\_vectors\_v1.ps1
+
+scripts/\_selftest\_nfl\_tier0\_locked\_v1.ps1
+
+scripts/nfl\_cli\_v1.ps1
+
+scripts/nfl\_api\_v1.ps1
+
+Summary
+
+
+
+Never Forgetting Ledger is a simple, durable system:
+
+
+
+hash something
+
+commit it once
+
+verify it forever
+
+
+
+No interpretation.
+
+No mutation.
+
+No forgetting.
+
+
+
+## Top extensions
+.20260209_182029=8
+.20260209_183531=8
+.bak=6
+.bak_20260202_140046=1
+.bak_20260202_141542=1
+.bak_20260202_141546=1
+.bak_20260202_142308=1
+.bak_20260202_145604=1
+.bak_20260202_150440=1
+.bak_20260202_151229=1
+.bak_20260202_170944=1
+.bak_20260202_171003=1
+.bak_20260202_171923=1
+.bak_20260202_181113=1
+.bak_20260202_181120=1
+.bak_20260202_181854=1
+.bak_20260202_211205=1
+.bak_20260202_212429=1
+.bak_20260202_214037=1
+.bak_20260202_220020=1
+
+## Candidate docs
+- docs\packet_constitution_v1\FINALIZATION_LAW_V1.md
+- docs\packet_constitution_v1\PACKET_CONSTITUTION_V1.md
+- handoff\watchtower\nfl_tier0_watchtower_handoff_20260308T024440Z\README_HANDOFF.txt
+- proofs\packet_law_inventory.txt
+- README.md
+- scripts\_PATCH_fix_packet_constitution_v1_docs_and_vectors_v1.ps1
+- scripts\_PATCH_packet_constitution_v1_docs_and_vectors.ps1
+- scripts\_PATCH_quarantine_legacy_packet_law_to_cpr_v1.ps1
+- scripts\_STAMP_packet_constitution_v1_docs_and_vectors_v2.ps1
+- scripts\inventory_duplicate_packet_law_v1.ps1
+- test_vectors\nfl_packet_verify_v1\negative\bad_sha256sum_line_0537effea5f535d061b313f72e37ca52d4a34fff00865066c51fa7dff410618a\payload\repo_snapshot\repo_root\README.md
+- test_vectors\nfl_packet_verify_v1\negative\bad_sha256sum_line_0537effea5f535d061b313f72e37ca52d4a34fff00865066c51fa7dff410618a\payload\repo_snapshot\repo_root\sql\introspection\000_introspect_core_objects.sql
+- test_vectors\nfl_packet_verify_v1\negative\bad_sha256sum_line_0537effea5f535d061b313f72e37ca52d4a34fff00865066c51fa7dff410618a\payload\repo_snapshot\repo_root\sql\introspection\000_introspect_gi_ppi_objects.sql
+- test_vectors\nfl_packet_verify_v1\negative\bad_sha256sum_line_0537effea5f535d061b313f72e37ca52d4a34fff00865066c51fa7dff410618a\payload\repo_snapshot\repo_root\sql\migrations\040_introspection_views.sql
+- test_vectors\nfl_packet_verify_v1\negative\bad_sha256sum_line_0537effea5f535d061b313f72e37ca52d4a34fff00865066c51fa7dff410618a\payload\repo_snapshot\repo_root\sql\ops\200_org_plan_and_overlay.sql

@@ -1,35 +1,12 @@
 {
   "schema": "nfl.inbox_registry.v1",
   "inboxes": [
-    {
-      "name": "nfl-packets-inbox",
-      "path": "C:/dev/nfl/packets/inbox",
-      "mode": "packet"
-    },
-    {
-      "name": "nfl-raw-files",
-      "path": "C:/dev/nfl/inbox/raw",
-      "mode": "file"
-    },
-    {
-      "name": "watchtower-outbox",
-      "path": "C:/dev/watchtower/packets/outbox",
-      "mode": "packet"
-    },
-    {
-      "name": "neverlost-outbox",
-      "path": "C:/dev/neverlost/outbox",
-      "mode": "packet"
-    },
-    {
-      "name": "covenant-gate-outbox",
-      "path": "C:/Dev/covenant-gate/outbox",
-      "mode": "packet"
-    },
-    {
-      "name": "pie-outbox",
-      "path": "C:/dev/pie/outbox",
-      "mode": "packet"
-    }
+    { "name": "nfl-packets-inbox", "path": "packets/inbox", "mode": "packet", "source": "local", "note": "NFL's own packet inbox. Packets carrying payload/nfl.ingest.json are attributed to their producer." },
+    { "name": "nfl-raw-files", "path": "inbox/raw", "mode": "file", "source": "local", "note": "Operator drop folder: every file's SHA-256 is committed." },
+    { "name": "nfl-integration-receipts", "path": "inbox/receipts", "mode": "receipt", "source": "local", "note": "constellation.integration.receipt.v1 lines (*.ndjson) dropped by emitters; each line is checked against the registered integrations." },
+    { "name": "watchtower-outbox", "path": "../watchtower/packets/outbox", "mode": "packet", "integration": "watchtower>nfl" },
+    { "name": "covenant-gate-outbox", "path": "../covenant-gate/outbox", "mode": "packet", "integration": "covenant-gate>nfl" },
+    { "name": "neverlost-outbox", "path": "../neverlost/outbox", "mode": "packet", "integration": "nfl>neverlost", "note": "NFL is the consumer here: it writes an nfl>neverlost integration receipt per packet read." },
+    { "name": "pie-outbox", "path": "../../_Aion-Systems/pie/outbox", "mode": "packet", "integration": "pie>nfl" }
   ]
 }

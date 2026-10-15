@@ -1,0 +1,91 @@
+VEC_POS_PACKET: C:\dev\nfl\test_vectors\nfl_packet_verify_v1\positive\packet_0537effea5f535d061b313f72e37ca52d4a34fff00865066c51fa7dff410618a
+VEC_POS_NAMESPACE: covenant-nfl
+PACKET: C:\dev\nfl\test_vectors\nfl_packet_verify_v1\positive\packet_0537effea5f535d061b313f72e37ca52d4a34fff00865066c51fa7dff410618a
+NAMESPACE: covenant-nfl
+OK: sha256sums verified entries=166
+SIG: C:\dev\nfl\test_vectors\nfl_packet_verify_v1\positive\packet_0537effea5f535d061b313f72e37ca52d4a34fff00865066c51fa7dff410618a\signatures\ingest.sig
+TARGET: C:\dev\nfl\test_vectors\nfl_packet_verify_v1\positive\packet_0537effea5f535d061b313f72e37ca52d4a34fff00865066c51fa7dff410618a\payload\sig_envelope.json
+PUB: C:\dev\nfl\test_vectors\nfl_packet_verify_v1\positive\packet_0537effea5f535d061b313f72e37ca52d4a34fff00865066c51fa7dff410618a\signer_ed25519.pub
+PRINCIPAL: single-tenant/owner/user/keira
+ALLOWED_SIGNERS_TMP: C:\Users\alecm\AppData\Local\Temp\covenant_allowed_signers_20260306_221737694\allowed_signers
+VERIFY_CMD: C:\WINDOWS\System32\OpenSSH\ssh-keygen.exe -Y verify -f "C:\Users\alecm\AppData\Local\Temp\covenant_allowed_signers_20260306_221737694\allowed_signers" -I "single-tenant/owner/user/keira" -n "covenant-nfl" -s "C:\dev\nfl\test_vectors\nfl_packet_verify_v1\positive\packet_0537effea5f535d061b313f72e37ca52d4a34fff00865066c51fa7dff410618a\signatures\ingest.sig"
+Good "covenant-nfl" signature for single-tenant/owner/user/keira with ED25519 key SHA256:OsxiJFcDjdTHeHa2s9ihOKjJBxVrPOO5ThokHRbCcJ0
+
+SIG_VERIFY_OK
+POS_OK
+NFL_VERIFY_FAIL:SHA256_MISMATCH
+
+NEG_CASE: tamper_payload
+  ROOT: C:\dev\nfl\test_vectors\nfl_packet_verify_v1\negative\tamper_payload_0537effea5f535d061b313f72e37ca52d4a34fff00865066c51fa7dff410618a
+  NS:   covenant-nfl
+  EXPECT: SHA256_MISMATCH
+PACKET: C:\dev\nfl\test_vectors\nfl_packet_verify_v1\negative\tamper_payload_0537effea5f535d061b313f72e37ca52d4a34fff00865066c51fa7dff410618a
+NAMESPACE: covenant-nfl
+NEG_OK: tamper_payload
+NFL_VERIFY_FAIL:MISSING_SIG
+
+NEG_CASE: missing_sig
+  ROOT: C:\dev\nfl\test_vectors\nfl_packet_verify_v1\negative\missing_sig_0537effea5f535d061b313f72e37ca52d4a34fff00865066c51fa7dff410618a
+  NS:   covenant-nfl
+  EXPECT: MISSING_SIG
+PACKET: C:\dev\nfl\test_vectors\nfl_packet_verify_v1\negative\missing_sig_0537effea5f535d061b313f72e37ca52d4a34fff00865066c51fa7dff410618a
+NAMESPACE: covenant-nfl
+NEG_OK: missing_sig
+NFL_VERIFY_FAIL:SIG_VERIFY_FAIL
+
+NEG_CASE: wrong_namespace
+  ROOT: C:\dev\nfl\test_vectors\nfl_packet_verify_v1\negative\wrong_namespace_0537effea5f535d061b313f72e37ca52d4a34fff00865066c51fa7dff410618a
+  NS:   covenant-nfl-BAD
+  EXPECT: SIG_VERIFY_FAIL
+PACKET: C:\dev\nfl\test_vectors\nfl_packet_verify_v1\negative\wrong_namespace_0537effea5f535d061b313f72e37ca52d4a34fff00865066c51fa7dff410618a
+NAMESPACE: covenant-nfl-BAD
+OK: sha256sums verified entries=166
+SIG: C:\dev\nfl\test_vectors\nfl_packet_verify_v1\negative\wrong_namespace_0537effea5f535d061b313f72e37ca52d4a34fff00865066c51fa7dff410618a\signatures\ingest.sig
+TARGET: C:\dev\nfl\test_vectors\nfl_packet_verify_v1\negative\wrong_namespace_0537effea5f535d061b313f72e37ca52d4a34fff00865066c51fa7dff410618a\payload\sig_envelope.json
+PUB: C:\dev\nfl\test_vectors\nfl_packet_verify_v1\negative\wrong_namespace_0537effea5f535d061b313f72e37ca52d4a34fff00865066c51fa7dff410618a\signer_ed25519.pub
+PRINCIPAL: single-tenant/owner/user/keira
+ALLOWED_SIGNERS_TMP: C:\Users\alecm\AppData\Local\Temp\covenant_allowed_signers_20260306_221738035\allowed_signers
+VERIFY_CMD: C:\WINDOWS\System32\OpenSSH\ssh-keygen.exe -Y verify -f "C:\Users\alecm\AppData\Local\Temp\covenant_allowed_signers_20260306_221738035\allowed_signers" -I "single-tenant/owner/user/keira" -n "covenant-nfl-BAD" -s "C:\dev\nfl\test_vectors\nfl_packet_verify_v1\negative\wrong_namespace_0537effea5f535d061b313f72e37ca52d4a34fff00865066c51fa7dff410618a\signatures\ingest.sig"
+Could not verify signature.
+
+Couldn't verify signature: namespace does not match
+
+NEG_OK: wrong_namespace
+NFL_VERIFY_FAIL:MISSING_SHA256SUMS
+
+NEG_CASE: missing_sha256sums
+  ROOT: C:\dev\nfl\test_vectors\nfl_packet_verify_v1\negative\missing_sha256sums_0537effea5f535d061b313f72e37ca52d4a34fff00865066c51fa7dff410618a
+  NS:   covenant-nfl
+  EXPECT: MISSING_SHA256SUMS
+PACKET: C:\dev\nfl\test_vectors\nfl_packet_verify_v1\negative\missing_sha256sums_0537effea5f535d061b313f72e37ca52d4a34fff00865066c51fa7dff410618a
+NAMESPACE: covenant-nfl
+NEG_OK: missing_sha256sums
+NFL_VERIFY_FAIL:BAD_SHA256SUM_LINE
+
+NEG_CASE: bad_sha256sum_line
+  ROOT: C:\dev\nfl\test_vectors\nfl_packet_verify_v1\negative\bad_sha256sum_line_0537effea5f535d061b313f72e37ca52d4a34fff00865066c51fa7dff410618a
+  NS:   covenant-nfl
+  EXPECT: BAD_SHA256SUM_LINE
+PACKET: C:\dev\nfl\test_vectors\nfl_packet_verify_v1\negative\bad_sha256sum_line_0537effea5f535d061b313f72e37ca52d4a34fff00865066c51fa7dff410618a
+NAMESPACE: covenant-nfl
+NEG_OK: bad_sha256sum_line
+NFL_VERIFY_FAIL:TRAVERSAL_PATH
+
+NEG_CASE: traversal_path
+  ROOT: C:\dev\nfl\test_vectors\nfl_packet_verify_v1\negative\traversal_path_0537effea5f535d061b313f72e37ca52d4a34fff00865066c51fa7dff410618a
+  NS:   covenant-nfl
+  EXPECT: TRAVERSAL_PATH
+PACKET: C:\dev\nfl\test_vectors\nfl_packet_verify_v1\negative\traversal_path_0537effea5f535d061b313f72e37ca52d4a34fff00865066c51fa7dff410618a
+NAMESPACE: covenant-nfl
+NEG_OK: traversal_path
+NFL_VERIFY_FAIL:MISSING_TARGET
+
+NEG_CASE: missing_target
+  ROOT: C:\dev\nfl\test_vectors\nfl_packet_verify_v1\negative\missing_target_0537effea5f535d061b313f72e37ca52d4a34fff00865066c51fa7dff410618a
+  NS:   covenant-nfl
+  EXPECT: MISSING_TARGET
+PACKET: C:\dev\nfl\test_vectors\nfl_packet_verify_v1\negative\missing_target_0537effea5f535d061b313f72e37ca52d4a34fff00865066c51fa7dff410618a
+NAMESPACE: covenant-nfl
+NEG_OK: missing_target
+RECEIPT_APPEND_OK: C:\dev\nfl\proofs\receipts\nfl_verify_v1.ndjson
+VECTOR_SELFTEST_OK

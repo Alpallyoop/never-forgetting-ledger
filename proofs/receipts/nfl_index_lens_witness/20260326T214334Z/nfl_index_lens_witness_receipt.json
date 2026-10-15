@@ -1,0 +1,15 @@
+{
+    "schema":  "nfl.index_lens_witness.v1",
+    "generated_utc":  "2026-03-26T21:43:35.3439310Z",
+    "repo_root":  "C:\\dev\\nfl",
+    "source_packet_dir":  "C:\\dev\\index-lens\\proofs\\nfl_duplication\\20260326T163943Z\\packet",
+    "dest_packet_dir":  "C:\\dev\\nfl\\packets\\inbox\\index_lens_48e32b896fd1d7760ea6478de459cdbaf2ecba907932200cadc03a0258ae5a80",
+    "manifest_path":  "C:\\dev\\nfl\\packets\\inbox\\index_lens_48e32b896fd1d7760ea6478de459cdbaf2ecba907932200cadc03a0258ae5a80\\manifest.json",
+    "packet_id":  "48e32b896fd1d7760ea6478de459cdbaf2ecba907932200cadc03a0258ae5a80",
+    "verifier":  "C:\\dev\\nfl\\scripts\\verify_packet_v1.ps1",
+    "verifier_accept_legacy_raw_manifest":  false,
+    "verifier_exit_code":  1,
+    "dest_manifest_sha256":  "48e32b896fd1d7760ea6478de459cdbaf2ecba907932200cadc03a0258ae5a80",
+    "stdout_log":  "C:\\dev\\nfl\\proofs\\receipts\\nfl_index_lens_witness\\20260326T214334Z\\verify.stdout.log",
+    "stderr_log":  "C:\\dev\\nfl\\proofs\\receipts\\nfl_index_lens_witness\\20260326T214334Z\\verify.stderr.log"
+}

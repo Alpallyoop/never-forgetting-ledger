@@ -1,0 +1,16 @@
+SELFTEST_PACKET: C:\covenant_inbox\0537effea5f535d061b313f72e37ca52d4a34fff00865066c51fa7dff410618a
+SELFTEST_NAMESPACE: covenant-nfl
+PACKET: C:\covenant_inbox\0537effea5f535d061b313f72e37ca52d4a34fff00865066c51fa7dff410618a
+NAMESPACE: covenant-nfl
+OK: sha256sums verified entries=166
+SIG: C:\covenant_inbox\0537effea5f535d061b313f72e37ca52d4a34fff00865066c51fa7dff410618a\signatures\ingest.sig
+TARGET: C:\covenant_inbox\0537effea5f535d061b313f72e37ca52d4a34fff00865066c51fa7dff410618a\payload\sig_envelope.json
+PUB: C:\covenant_inbox\0537effea5f535d061b313f72e37ca52d4a34fff00865066c51fa7dff410618a\signer_ed25519.pub
+PRINCIPAL: single-tenant/owner/user/keira
+ALLOWED_SIGNERS_TMP: C:\Users\alecm\AppData\Local\Temp\covenant_allowed_signers_20260306_221736646\allowed_signers
+VERIFY_CMD: C:\WINDOWS\System32\OpenSSH\ssh-keygen.exe -Y verify -f "C:\Users\alecm\AppData\Local\Temp\covenant_allowed_signers_20260306_221736646\allowed_signers" -I "single-tenant/owner/user/keira" -n "covenant-nfl" -s "C:\covenant_inbox\0537effea5f535d061b313f72e37ca52d4a34fff00865066c51fa7dff410618a\signatures\ingest.sig"
+Good "covenant-nfl" signature for single-tenant/owner/user/keira with ED25519 key SHA256:OsxiJFcDjdTHeHa2s9ihOKjJBxVrPOO5ThokHRbCcJ0
+
+SIG_VERIFY_OK
+RECEIPT_APPEND_OK: C:\dev\nfl\proofs\receipts\nfl_verify_v1.ndjson
+SELFTEST_OK
