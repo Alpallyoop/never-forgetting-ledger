@@ -45,6 +45,6 @@ stay with NeverLost.
 | 4. Never block the emitter | | NFL only reads the emitter's line; an absent NFL leaves it untouched (self-test R10). |
 | NFL as emitter | `_lib_nfl_v1.ps1` `Write-NflOwnIntegrationReceipt`, `Sync-NflOwnIntegrationReceipts` | `nfl>cpr` per CPR verdict, `nfl>neverlost` per trust bundle used and per NeverLost outbox packet, chained per integration, witnessed after each ingest run or by `witness-own-receipts`. Verification commands never write the ledger themselves. |
 
-Tests: `_selftest_nfl_receipts_ingest_v1.ps1` (29 cases) and `_selftest_nfl_api_v1.ps1` (18 cases), both in
+Tests: `_selftest_nfl_receipts_ingest_v1.ps1` (37 cases) and `_selftest_nfl_api_v1.ps1` (19 cases), both in
 `_RUN_nfl_selftests_v1.ps1`. The registered integrations are read from `.constellation/SERVICE_MAP.md`; see
 proposal 0002 for the request to publish them machine-readably.

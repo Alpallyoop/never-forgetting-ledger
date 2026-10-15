@@ -23,7 +23,13 @@ param(
   [Parameter(Mandatory=$false)][string]$RepoRoot = "",
   [Parameter(Mandatory=$false)][string]$Prefix = "http://127.0.0.1:8086/",
   [Parameter(Mandatory=$false)][int]$DefaultLimit = 500,
-  [Parameter(Mandatory=$false)][int]$MaxBodyBytes = 1048576
+  [Parameter(Mandatory=$false)][int]$MaxBodyBytes = 1048576,
+  # Browser origins allowed to call the API (exact "scheme://host:port"). Default: none - the desktop explorer
+  # calls from its main process and sends no Origin, so any page in any browser is refused.
+  [Parameter(Mandatory=$false)][string[]]$AllowedOrigins = @(),
+  # POST /verify {"file":...} hashes a path on this machine. Off by default (device files, network shares);
+  # callers send {"sha256":...} instead.
+  [Parameter(Mandatory=$false)][switch]$AllowPathVerify
 )
 
 Set-StrictMode -Version Latest
@@ -32,7 +38,7 @@ $ErrorActionPreference = "Stop"
 
 function Test-LocalOrigin([string]$origin){
   if([string]::IsNullOrEmpty($origin)){ return $true }
-  return ($origin -match '^https?://(127\.0\.0\.1|localhost)(:\d+)?$')
+  return ($AllowedOrigins -ccontains $origin)
 }
 
 function Send-Json($res,$obj,[string]$allowOrigin,[int]$status = 200){
@@ -134,6 +140,10 @@ try {
       $origin = [string]$req.Headers["Origin"]
       $hostHdr = ([string]$req.Headers["Host"]).ToLowerInvariant()
 
+      if(-not [System.Net.IPAddress]::IsLoopback($req.RemoteEndPoint.Address)){
+        Send-Json $res ([ordered]@{ status = "FORBIDDEN"; message = "remote address not loopback" }) "" 403
+        continue
+      }
       if($AllowedHosts -notcontains $hostHdr){
         Send-Json $res ([ordered]@{ status = "FORBIDDEN"; message = "host not allowed" }) "" 403
         continue
@@ -184,7 +194,11 @@ try {
         $file = [string](Get-NflProp $body 'file')
         $sha = [string](Get-NflProp $body 'sha256')
         if(-not [string]::IsNullOrWhiteSpace($file)){
+          if(-not $AllowPathVerify){ throw "NFL_PATH_VERIFY_DISABLED" }
+          if($file.StartsWith("\\") -or $file.StartsWith("//") -or -not [System.IO.Path]::IsPathRooted($file)){ throw "NFL_PATH_NOT_LOCAL_ABSOLUTE" }
           if(-not (Test-Path -LiteralPath $file -PathType Leaf)){ throw "NFL_FILE_NOT_FOUND" }
+          $fi = Get-Item -LiteralPath $file
+          if(($fi.Attributes -band [System.IO.FileAttributes]::Device) -or ($IsLinux -and $fi.FullName.StartsWith("/dev/")) -or ($IsLinux -and $fi.FullName.StartsWith("/proc/"))){ throw "NFL_PATH_NOT_REGULAR_FILE" }
           $h = Get-NflSha256File $file
         } elseif(-not [string]::IsNullOrWhiteSpace($sha)){
           $h = Assert-NflCommitHash $sha

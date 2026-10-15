@@ -21,7 +21,10 @@ Gate), or the content of what it witnesses.
 | Explorer | sibling repository `nfl-explorer` | desktop UI; talks to NFL only through the HTTP API |
 
 All writers share one implementation, `scripts/_lib_nfl_v1.ps1`: one exclusive lock, one self-chain
-(`seq` + `prev`), one canonical record hash, identical results on Windows PowerShell 5.1 and PowerShell 7.
+(`seq` + `prev`, where `prev` is the previous record's link hash and each link covers that record's core and
+its own `prev`, so the head commits to the whole history), a pin of where self-chaining started
+(`data/ledger.selfchain.json`), one canonical record hash, identical results on Windows PowerShell 5.1 and
+PowerShell 7.
 
 ## Result tokens
 
@@ -61,8 +64,10 @@ characters.
 | `GET /receipts?packet_id=` | `nfl.receipt.v1` receipts issued for ingested envelopes |
 | `GET /ingest/last-run`, `/ingest/runs`, `/ingest/state`, `/ingest/failures`; `POST /ingest/control` | ingest operations |
 
-Guards: loopback prefix only; `Host` must be the listener's own `127.0.0.1:<port>` or `localhost:<port>`;
-a request with a non-local `Origin` gets 403; bodies over 1 MiB are refused. Details:
+Guards: loopback prefix and loopback remote address only; `Host` must be the listener's own
+`127.0.0.1:<port>` or `localhost:<port>`; any request with an `Origin` header gets 403 unless that origin was
+allowed with `-AllowedOrigins`; bodies over 1 MiB are refused; path verification (`{"file":...}`) is off
+unless started with `-AllowPathVerify`. Details:
 `docs/NFL_API_QUICKSTART.md`.
 
 ## Integration receipts (proposal 0001)
@@ -96,7 +101,7 @@ with `witness-own-receipts`.
 .\scripts\_RUN_nfl_selftests_v1.ps1          # everything below, fail-closed
 ```
 
-Self-chain 4/4, checkpoint 5/5, seal 9/9, API 18/18, receipts + ingest 29/29 (needs CPR), portable export
+Self-chain 6/6, checkpoint 5/5, seal 9/9, API 19/19, receipts + ingest 37/37 (needs CPR), portable export
 9/9 (python3), and a read-only check of the real ledger's chain. `NFL_Apply_All.cmd` runs these plus the
 Windows-only CLI full-green (real CPR, real ingest), refreshes the ingest task and commits a proven baseline.
 

@@ -101,6 +101,25 @@ WriteLines (LedgerOf $c) $lines
 $v = VerifyChain $c
 Assert "REORDER" (($v.ExitCode -eq 1) -and (($v.StdOut -match 'NFL_LEDGER_CHAIN_FAIL:SEQ_MISMATCH') -or ($v.StdOut -match 'NFL_LEDGER_CHAIN_FAIL:CHAIN_BREAK'))) ("exit=" + $v.ExitCode)
 
+# CASCADE (rewrite a record AND repair the next record's prev -> the link after it still breaks)
+$c = Join-Path $TmpRoot "cascade"
+Commit $c "aaa1" "one"; Commit $c "bbb2" "two"; Commit $c "ccc3" "three"; Commit $c "ddd4" "four"
+. (Join-Path $RepoRoot "scripts\_lib_nfl_v1.ps1")
+$lines = ReadLines (LedgerOf $c)
+$o1 = ConvertFrom-NflJson $lines[1]; $o1.hash = "ffff"; $o1.artifact = "forged"; $lines[1] = ConvertTo-NflCanonicalJson $o1
+$o2 = ConvertFrom-NflJson $lines[2]; $o2.prev = Get-NflLinkHash $o1; $lines[2] = ConvertTo-NflCanonicalJson $o2
+WriteLines (LedgerOf $c) $lines
+$v = VerifyChain $c
+Assert "CASCADE_REWRITE_DETECTED" (($v.ExitCode -eq 1) -and ($v.StdOut -match 'NFL_LEDGER_CHAIN_FAIL:CHAIN_BREAK:3')) ("exit=" + $v.ExitCode)
+
+# STRIP (remove seq/prev from every record to fake an unchained prefix -> the pin catches it)
+$c = Join-Path $TmpRoot "strip"
+Commit $c "aaa1" "one"; Commit $c "bbb2" "two"
+$lines = @(ReadLines (LedgerOf $c) | ForEach-Object { $o = ConvertFrom-NflJson $_; ConvertTo-NflCanonicalJson ([ordered]@{ hash=$o.hash; artifact=$o.artifact; timestamp=$o.timestamp }) })
+WriteLines (LedgerOf $c) $lines
+$v = VerifyChain $c
+Assert "STRIP_CHAIN_DETECTED" (($v.ExitCode -eq 1) -and ($v.StdOut -match 'CHAIN_START_MOVED')) ("exit=" + $v.ExitCode)
+
 $passed = @($results | Where-Object { $_.ok }).Count
 $total  = $results.Count
 if(-not $Keep){ Remove-Item -LiteralPath $TmpRoot -Recurse -Force -ErrorAction SilentlyContinue }

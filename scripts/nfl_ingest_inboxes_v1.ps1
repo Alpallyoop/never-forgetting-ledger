@@ -145,9 +145,16 @@ foreach($inbox in @($config.inboxes)){
     foreach($dir in @(Get-ChildItem -LiteralPath $full -Directory -ErrorAction SilentlyContinue | Sort-Object Name)){
       $C.scanned++
       $pidFile = Join-NflPath $dir.FullName "packet_id.txt"
+      # The packet id is only taken when packet_id.txt equals SHA-256(manifest.json) - recomputed here, not
+      # trusted from the file or the folder name (CPR checks the same law).
       $packetId = $null
-      if(Test-Path -LiteralPath $pidFile -PathType Leaf){ $t = ([System.IO.File]::ReadAllText($pidFile)).Trim().ToLowerInvariant(); if(Test-NflHex64 $t){ $packetId = $t } }
-      if(($null -eq $packetId) -and (Test-NflHex64 $dir.Name.ToLowerInvariant())){ $packetId = $dir.Name.ToLowerInvariant() }
+      $manPath = Join-NflPath $dir.FullName "manifest.json"
+      $manBytes = $null
+      if((Test-Path -LiteralPath $pidFile -PathType Leaf) -and (Test-Path -LiteralPath $manPath -PathType Leaf)){
+        $t = ([System.IO.File]::ReadAllText($pidFile)).Trim().ToLowerInvariant()
+        $manBytes = [System.IO.File]::ReadAllBytes($manPath)
+        if((Test-NflHex64 $t) -and ($t -eq (Get-NflSha256Hex $manBytes))){ $packetId = $t }
+      }
       $rel = Get-RelPath $dir.FullName $full
       # Dedup: a packet id is only trusted once CPR has verified it (success keys on the id); anything
       # that fails or cannot be attributed keys on its path, so a bad copy can never shadow a good one.
@@ -159,9 +166,10 @@ foreach($inbox in @($config.inboxes)){
 
       $envPath = Join-NflPath $dir.FullName "payload" "nfl.ingest.json"
       $hasEnv = Test-Path -LiteralPath $envPath -PathType Leaf
-      if((-not $hasEnv) -and ($null -ne $attribErr)){
+      if($null -ne $attribErr){
+        # Not final when the registry copy is only temporarily missing: retried on the next run.
         $C.unattributed++; $Unattributed.Add(($name + "/" + $rel))
-        Write-State $key $name "packet" $rel "NFL_INGEST_UNATTRIBUTED" $false $true @{ reason=$attribErr }
+        Write-State $key $name "packet" $rel "NFL_INGEST_UNATTRIBUTED" $false ($attribErr -ne "REGISTRY_UNAVAILABLE") @{ reason=$attribErr }
         continue
       }
       if($null -eq $CprVerifier){
@@ -191,9 +199,30 @@ foreach($inbox in @($config.inboxes)){
 
       if($hasEnv){
         $envObj = $null; $err = $null
-        try { $envObj = ConvertFrom-NflJson ([System.IO.File]::ReadAllText($envPath,(Get-NflUtf8))) } catch { $err = "INGEST_ENVELOPE_BAD_JSON" }
+        if($null -eq $packetId){ $err = "PACKET_ID_UNREADABLE" }
+        $envBytes = [System.IO.File]::ReadAllBytes($envPath)
+        $envText = (Get-NflUtf8).GetString($envBytes)
+        if(($null -eq $err) -and -not $envText.TrimStart().StartsWith("{")){ $err = "INGEST_ENVELOPE_NOT_OBJECT" }
+        if($null -eq $err){ try { $envObj = ConvertFrom-NflJson $envText } catch { $err = "INGEST_ENVELOPE_BAD_JSON" } }
         if($null -eq $err){ $err = Test-NflIngestEnvelope $envObj }
-        if(($null -eq $err) -and ($null -eq $packetId)){ $err = "PACKET_ID_UNREADABLE" }
+        if($null -eq $err){
+          # Bind the envelope bytes read now to the verified manifest: its entry for payload/nfl.ingest.json
+          # must carry this SHA-256 (closes the gap between CPR's check and this read).
+          $envSha = Get-NflSha256Hex $envBytes
+          $manText = (Get-NflUtf8).GetString($manBytes)
+          $bound = $false
+          try {
+            $stack = New-Object System.Collections.Generic.Stack[object]; $stack.Push((ConvertFrom-NflJson $manText))
+            while($stack.Count -gt 0){
+              $n = $stack.Pop()
+              if($n -is [System.Management.Automation.PSCustomObject]){
+                if(([string](Get-NflProp $n 'path') -replace '\\','/') -eq "payload/nfl.ingest.json" -and [string](Get-NflProp $n 'sha256') -eq $envSha){ $bound = $true }
+                foreach($pp in $n.PSObject.Properties){ if($null -ne $pp.Value){ $stack.Push($pp.Value) } }
+              } elseif(($n -is [System.Array])){ foreach($x in $n){ if($null -ne $x){ $stack.Push($x) } } }
+            }
+          } catch { $bound = $false }
+          if(-not $bound){ $err = "INGEST_ENVELOPE_NOT_BOUND_TO_MANIFEST" }
+        }
         # Under Packet Constitution v1 Option A the packet id is SHA-256 of manifest.json, and the manifest
         # covers payload/nfl.ingest.json, so the envelope cannot carry the real packet id. NFL keys on the
         # CPR-verified id and records the producer's declared packet_id beside it (never as proof).
@@ -203,9 +232,13 @@ foreach($inbox in @($config.inboxes)){
           continue
         }
         $reg = Find-NflRegisteredIntegration $Integrations $envObj.producer "nfl"
-        if(($null -eq $Integrations) -or ($null -eq $reg) -or ((@($reg.contracts).Count -gt 0) -and (@($reg.contracts) -notcontains "nfl.ingest.v1"))){
+        $why = $null
+        if($null -eq $Integrations){ $why = "REGISTRY_UNAVAILABLE" }
+        elseif(($null -eq $reg) -or ((@($reg.contracts).Count -gt 0) -and (@($reg.contracts) -notcontains "nfl.ingest.v1"))){ $why = "PRODUCER_NOT_REGISTERED_FOR_NFL_INGEST:" + $envObj.producer }
+        elseif(($attrib -ne "local") -and ($attrib -ne ($envObj.producer + ">nfl"))){ $why = "PRODUCER_NOT_INBOX_OWNER:" + $envObj.producer }
+        if($null -ne $why){
           $C.unattributed++; $Unattributed.Add(($name + "/" + $rel))
-          Write-State $key $name "packet" $rel "NFL_INGEST_UNATTRIBUTED" $false $true @{ reason=$(if($null -eq $Integrations){ "REGISTRY_UNAVAILABLE" } else { "PRODUCER_NOT_REGISTERED_FOR_NFL_INGEST:" + $envObj.producer }) }
+          Write-State $key $name "packet" $rel "NFL_INGEST_UNATTRIBUTED" $false ($why -ne "REGISTRY_UNAVAILABLE") @{ reason=$why }
           continue
         }
         $commit = Add-NflLedgerRecord -RepoRoot $RepoRoot -Hash $envObj.commit_hash -Artifact (Get-NflIngestLabel $envObj.producer $packetId) -IdempotentOnHashArtifact
@@ -262,7 +295,8 @@ foreach($inbox in @($config.inboxes)){
       }
       if($ref -gt 0 -and $wit -eq 0){ $C.failed++ } else { $C.processed++ }
       if($ref -gt 0){ $C.unattributed += @($errs | Where-Object { $_ -eq "RECEIPT_UNATTRIBUTED" }).Count; if(@($errs | Where-Object { $_ -eq "RECEIPT_UNATTRIBUTED" }).Count -gt 0){ $Unattributed.Add(($name + "/" + $rel)) } }
-      Write-State $key $name "receipt" $rel $(if($ref -eq 0){ "NFL_RECEIPT_WITNESS_OK" } else { "NFL_RECEIPT_REFUSED" }) ($ref -eq 0) $true @{ sha256=$hash; witnessed=$wit; refused=$ref; errors=@($errs | Select-Object -Unique) }
+      $final = -not (@($errs | Where-Object { $_ -eq "RECEIPT_REGISTRY_UNAVAILABLE" }).Count -gt 0)
+      Write-State $key $name "receipt" $rel $(if($ref -eq 0){ "NFL_RECEIPT_WITNESS_OK" } else { "NFL_RECEIPT_REFUSED" }) ($ref -eq 0) $final @{ sha256=$hash; witnessed=$wit; refused=$ref; errors=@($errs | Select-Object -Unique) }
     }
   }
 }

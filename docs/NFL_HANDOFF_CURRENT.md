@@ -21,7 +21,8 @@ authorities said, and can prove it later (self-chain, checkpoints, signed seals,
 | Contracts | `schemas/nfl.ingest.v1`, `nfl.receipt.v1`, `nfl.ledger.record.v1`, `nfl.inbox_registry.v1` |
 | Ingest | rewritten: relative inbox paths (the `C:/dev/...` paths broke at the S: move; ingest had been scanning nothing since 2026-10-13), no folders created in other repositories, attribution, `nfl.ingest.v1` envelopes -> `nfl.receipt.v1`, verified packet ids committed, dedup that a bad copy cannot poison, CPR missing = `pending` and retried |
 | Durable ledger (checkpoint / seal / export / trust bundle + root of trust) | done 2026-08/10, unchanged in behaviour |
-| Tests | `_RUN_nfl_selftests_v1.ps1`: parse gate 23, self-chain 4/4, checkpoint 5/5, seal 9/9, API 18/18, receipts + ingest 29/29, export 9/9, real ledger chain; all green on Linux / PowerShell 7.4.6 on 2026-10-15 |
+| Independent review (2026-10-15) | 12 findings fixed: self-chain made cumulative (link hash covers `prev`) and its start pinned; receipt/envelope validators reject array-typed fields and trailing newlines (`\z` anchors); culture-independent timestamps; torn last lines can no longer swallow a receipt; own-receipt sync only commits `nfl>` receipts of registered integrations; packet id recomputed from `manifest.json`; envelope bytes bound to the manifest; producer bound to its inbox; registry outages retried; API checks the remote address, refuses every browser `Origin` by default and has path verification off by default; readers never block the writer on Windows |
+| Tests | `_RUN_nfl_selftests_v1.ps1`: parse gate 23, self-chain 6/6, checkpoint 5/5, seal 9/9, API 19/19, receipts + ingest 37/37, export 9/9, real ledger chain; all green on Linux / PowerShell 7.4.6 on 2026-10-15 |
 | Quarantine lane for invalid ingest | not built: failed items are recorded (`ok:false`, token) and never reach the ledger, but are not moved |
 
 ## 3. Needs the home computer (Windows)

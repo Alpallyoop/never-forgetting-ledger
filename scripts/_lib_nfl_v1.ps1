@@ -5,7 +5,8 @@
 # Ledger record (data/ledger.ndjson, append-only, one JSON object per LF-terminated line):
 #   core  : hash, artifact, timestamp           (the record hash covers only these, see Get-NflRecordHash)
 #   extra : optional string fields (schema, source_repo, ...) written by the API / ingest
-#   chain : seq (0-based line index), prev (record hash of the previous line, "GENESIS" for line 0)
+#   chain : seq (0-based line index), prev (link hash of the previous line, "GENESIS" for line 0; see
+#           Get-NflLinkHash: a link covers the record's core and its own prev, so the head commits to all of it)
 # Canonical core bytes (nfl.ledger.core.canon.v1):
 #   {"hash":<str>,"artifact":<str|null>,"timestamp":<str>}  -- compact, keys in that order,
 #   strings escaped per RFC 8259 minimal escaping (\" \\ \b \f \n \r \t, other < 0x20 as \u00xx).
@@ -19,7 +20,7 @@ $script:NflZero64 = ("0" * 64)
 
 function Get-NflUtf8 { return (New-Object System.Text.UTF8Encoding($false)) }
 
-function Get-NflUtc { return (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ") }
+function Get-NflUtc { return [DateTime]::UtcNow.ToString("yyyy'-'MM'-'dd'T'HH':'mm':'ss'Z'",[Globalization.CultureInfo]::InvariantCulture) }
 
 # ---- paths ------------------------------------------------------------------------------------
 function Join-NflPath([string]$Base){
@@ -200,14 +201,14 @@ function Test-NflProp($o,[string]$Name){
 }
 
 # ---- validation -------------------------------------------------------------------------------
-function Test-NflHex64([string]$h){ return ($null -ne $h -and $h -cmatch '^[0-9a-f]{64}$') }
+function Test-NflHex64([string]$h){ return ($null -ne $h -and $h -cmatch '^[0-9a-f]{64}\z') }
 
 function Assert-NflCommitHash([string]$Hash){
   # A hex digest. SHA-256 (64 hex) is the ecosystem default; shorter/longer digests (sha1/sha512, test
   # vectors) stay accepted for compatibility with existing CLI/API callers. Anything else is refused.
   if([string]::IsNullOrWhiteSpace($Hash)){ throw "NFL_MISSING_HASH" }
   $h = $Hash.Trim().ToLowerInvariant()
-  if($h -notmatch '^[0-9a-f]{4,128}$'){ throw "NFL_BAD_HASH" }
+  if($h -notmatch '^[0-9a-f]{4,128}\z'){ throw "NFL_BAD_HASH" }
   return $h
 }
 
@@ -219,9 +220,27 @@ function Assert-NflArtifact([string]$Artifact){
 }
 
 # ---- ledger read ------------------------------------------------------------------------------
+function Read-NflText([string]$Path){
+  # Shares read AND write so readers never block the (lock-protected) appender on Windows.
+  $fs = [System.IO.File]::Open($Path,[System.IO.FileMode]::Open,[System.IO.FileAccess]::Read,[System.IO.FileShare]::ReadWrite)
+  try { $sr = New-Object System.IO.StreamReader($fs,(Get-NflUtf8),$false); try { return $sr.ReadToEnd() } finally { $sr.Dispose() } } finally { $fs.Dispose() }
+}
+
+function Add-NflLine([string]$Path,[string]$Line){
+  # Durable append of one LF-terminated line; a torn (unterminated) last line is closed first so the new
+  # line can never be glued onto it. Caller holds the lock for $Path.
+  $prefix = ""
+  if((Test-Path -LiteralPath $Path -PathType Leaf) -and ((Get-Item -LiteralPath $Path).Length -gt 0)){
+    $fsr = [System.IO.File]::Open($Path,[System.IO.FileMode]::Open,[System.IO.FileAccess]::Read,[System.IO.FileShare]::ReadWrite)
+    try { [void]$fsr.Seek(-1,[System.IO.SeekOrigin]::End); if($fsr.ReadByte() -ne 10){ $prefix = "`n" } } finally { $fsr.Dispose() }
+  }
+  $b = (Get-NflUtf8).GetBytes($prefix + $Line + "`n")
+  $fs = [System.IO.File]::Open($Path,[System.IO.FileMode]::Append,[System.IO.FileAccess]::Write,[System.IO.FileShare]::ReadWrite)
+  try { $fs.Write($b,0,$b.Length); $fs.Flush($true) } finally { $fs.Dispose() }
+}
 function Read-NflLedgerLines([string]$LedgerPath){
   if(-not (Test-Path -LiteralPath $LedgerPath -PathType Leaf)){ return @() }
-  $raw = [System.IO.File]::ReadAllText($LedgerPath,(Get-NflUtf8))
+  $raw = Read-NflText $LedgerPath
   if($raw.Length -gt 0 -and [int][char]$raw[0] -eq 0xFEFF){ $raw = $raw.Substring(1) }
   $norm = ($raw -replace "`r`n","`n") -replace "`r","`n"
   return @(($norm -split "`n") | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
@@ -245,6 +264,19 @@ function Get-NflCoreCanon($rec){
   return (ConvertTo-NflCanonicalJson $core)
 }
 function Get-NflRecordHash($rec){ return (Get-NflSha256HexOfString (Get-NflCoreCanon $rec)) }
+
+function Get-NflLinkHash($rec){
+  # Self-chain link (nfl.ledger.selfchain.v1). For a chained record (has prev) the link covers its own core
+  # AND its prev, so every link commits to the whole history before it:
+  #   link = sha256("nfl.ledger.selfchain.v1\n" + prev + "\n" + record_hash)
+  # For a record of the unchained prefix (written before self-chaining) the link is its record hash.
+  # The next record's prev must equal this link.
+  $rh = Get-NflRecordHash $rec
+  if(-not (Test-NflProp $rec 'prev')){ return $rh }
+  return (Get-NflSha256HexOfString ("nfl.ledger.selfchain.v1`n" + [string](Get-NflProp $rec 'prev') + "`n" + $rh))
+}
+
+function Get-NflChainPinPath([string]$RepoRoot){ return (Join-NflPath $RepoRoot "data" "ledger.selfchain.json") }
 
 # ---- ledger write (single writer, self-chained) ----------------------------------------------
 function Open-NflLedgerLock([string]$LedgerPath,[int]$TimeoutMs = 15000){
@@ -284,7 +316,15 @@ function Add-NflLedgerRecord {
       }
     }
     $seq = $records.Count
-    $prev = if($seq -eq 0){ $script:NflGenesis } else { Get-NflRecordHash $records[$seq-1] }
+    $prev = if($seq -eq 0){ $script:NflGenesis } else { Get-NflLinkHash $records[$seq-1] }
+    # Pin where self-chaining started, so stripping seq/prev from records cannot turn them back into an
+    # "unchained prefix" unnoticed.
+    $pin = Get-NflChainPinPath $RepoRoot
+    if(-not (Test-Path -LiteralPath $pin -PathType Leaf)){
+      $start = $seq
+      for($j=0; $j -lt $records.Count; $j++){ if(Test-NflProp $records[$j] 'prev'){ $start = $j; break } }
+      [System.IO.File]::WriteAllText($pin, ((ConvertTo-NflCanonicalJson ([ordered]@{ schema = "nfl.ledger.selfchain_pin.v1"; chain_start_seq = $start })) + "`n"), (Get-NflUtf8))
+    }
     $ts = Get-NflUtc
     $row = [ordered]@{ hash = $h; artifact = $a; timestamp = $ts }
     if($null -ne $Extra){
@@ -309,7 +349,7 @@ function Add-NflLedgerRecord {
       }
     }
     $bytes = (Get-NflUtf8).GetBytes($prefix + $line + "`n")
-    $fs = [System.IO.File]::Open($ledger,[System.IO.FileMode]::Append,[System.IO.FileAccess]::Write,[System.IO.FileShare]::Read)
+    $fs = [System.IO.File]::Open($ledger,[System.IO.FileMode]::Append,[System.IO.FileAccess]::Write,[System.IO.FileShare]::ReadWrite)
     try { $fs.Write($bytes,0,$bytes.Length); $fs.Flush($true) } finally { $fs.Dispose() }
 
     # Verify the write before anyone reports success.
@@ -340,13 +380,13 @@ function Test-NflLedgerChain([string]$RepoRoot){
   if(-not (Test-Path -LiteralPath $ledger -PathType Leaf)){ return [pscustomobject]@{ Ok=$false; Error="LEDGER_MISSING"; Count=0; UnchainedPrefix=0; ChainedCount=0; Head=$null; Detail="" } }
   $records = $null
   try { $records = @(Read-NflLedgerRecords $ledger) } catch { return [pscustomobject]@{ Ok=$false; Error=([string]$_.Exception.Message -replace '^NFL_LEDGER_',''); Count=0; UnchainedPrefix=0; ChainedCount=0; Head=$null; Detail="" } }
-  $chainedFrom = -1; $chained = 0; $prevRh = $null
+  $chainedFrom = -1; $chained = 0; $prevLink = $null
   for($i=0; $i -lt $records.Count; $i++){
     $o = $records[$i]
     if(Test-NflProp $o 'prev'){
       if($chainedFrom -lt 0){ $chainedFrom = $i }
       $chained++
-      $expected = if($i -eq 0){ $script:NflGenesis } else { $prevRh }
+      $expected = if($i -eq 0){ $script:NflGenesis } else { $prevLink }
       if([string](Get-NflProp $o 'prev') -ne [string]$expected){
         return [pscustomobject]@{ Ok=$false; Error=("CHAIN_BREAK:" + $i); Count=$records.Count; UnchainedPrefix=$chainedFrom; ChainedCount=$chained; Head=$null; Detail=("EXPECTED_PREV=" + $expected + "`nRECORD_PREV=" + [string](Get-NflProp $o 'prev')) }
       }
@@ -359,10 +399,19 @@ function Test-NflLedgerChain([string]$RepoRoot){
         return [pscustomobject]@{ Ok=$false; Error=("SEQ_MISMATCH:" + $i + ":got=" + [string]$s); Count=$records.Count; UnchainedPrefix=$chainedFrom; ChainedCount=$chained; Head=$null; Detail="" }
       }
     }
-    $prevRh = Get-NflRecordHash $o
+    $prevLink = Get-NflLinkHash $o
   }
   $prefix = if($chainedFrom -lt 0){ $records.Count } else { $chainedFrom }
-  return [pscustomobject]@{ Ok=$true; Error=$null; Count=$records.Count; UnchainedPrefix=$prefix; ChainedCount=$chained; Head=$prevRh; Detail="" }
+  $pin = Get-NflChainPinPath $RepoRoot
+  if(Test-Path -LiteralPath $pin -PathType Leaf){
+    $pv = $null
+    try { $pv = ConvertFrom-NflJson (Read-NflText $pin) } catch {}
+    $ps = Get-NflProp $pv 'chain_start_seq'
+    if(($null -eq $ps) -or ([string]$ps -ne [string]$prefix)){
+      return [pscustomobject]@{ Ok=$false; Error=("CHAIN_START_MOVED:pinned=" + [string]$ps + ":found=" + $prefix); Count=$records.Count; UnchainedPrefix=$prefix; ChainedCount=$chained; Head=$null; Detail="" }
+    }
+  }
+  return [pscustomobject]@{ Ok=$true; Error=$null; Count=$records.Count; UnchainedPrefix=$prefix; ChainedCount=$chained; Head=$prevLink; Detail="" }
 }
 
 # ---- registered integrations (from the read-only .constellation copy) ------------------------
@@ -386,13 +435,13 @@ function Get-NflRegisteredIntegrations([string]$RepoRoot){
   $in = $false
   $out = New-Object System.Collections.Generic.List[object]
   foreach($ln in $lines){
-    if($ln -match '^##\s+Integrations\s*$'){ $in = $true; continue }
+    if($ln -match '^##\s+Integrations\s*\z'){ $in = $true; continue }
     if($in -and $ln -match '^##\s'){ break }
     if(-not $in){ continue }
     if($ln -notmatch '^\|'){ continue }
     $cells = @($ln.Trim().Trim('|').Split('|') | ForEach-Object { $_.Trim() })
     if($cells.Count -lt 6){ continue }
-    if($cells[0] -eq "Consumer" -or $cells[0] -match '^-+$'){ continue }
+    if($cells[0] -eq "Consumer" -or $cells[0] -match '^-+\z'){ continue }
     $contracts = @()
     if($cells[4] -ne "None"){ $contracts = @($cells[4].Split(',') | ForEach-Object { $_.Trim() } | Where-Object { $_ }) }
     $witness = $null
@@ -432,21 +481,21 @@ function Test-NflIntegrationReceiptLine([string]$Line){
   if(($keys -join ",") -ne ($want -join ",")){ return (& $fail "RECEIPT_KEYS_NOT_CANONICAL") }
   try { $canon = ConvertTo-NflCanonicalJson $o } catch { return (& $fail "RECEIPT_NOT_CANONICAL") }
   if($canon -ne $l){ return (& $fail "RECEIPT_NOT_CANONICAL") }
-  if($o.schema -cne $script:NflReceiptSchema){ return (& $fail "RECEIPT_BAD_SCHEMA") }
-  foreach($n in @("consumer","provider")){ $v = $o.$n; if(($v -isnot [string]) -or ($v -cnotmatch '^[a-z0-9][a-z0-9-]*$')){ return (& $fail ("RECEIPT_BAD_" + $n.ToUpperInvariant())) } }
-  if(@("consumer","provider") -cnotcontains $o.emitted_by){ return (& $fail "RECEIPT_BAD_EMITTED_BY") }
-  if(($null -ne $o.contract) -and (($o.contract -isnot [string]) -or ($o.contract -cnotmatch '^[a-z0-9][a-z0-9_.-]*\.v[0-9]+$'))){ return (& $fail "RECEIPT_BAD_CONTRACT") }
+  if(($o.schema -isnot [string]) -or ($o.schema -cne $script:NflReceiptSchema)){ return (& $fail "RECEIPT_BAD_SCHEMA") }
+  foreach($n in @("consumer","provider")){ $v = $o.$n; if(($v -isnot [string]) -or ($v -cnotmatch '^[a-z0-9][a-z0-9-]*\z')){ return (& $fail ("RECEIPT_BAD_" + $n.ToUpperInvariant())) } }
+  if(($o.emitted_by -isnot [string]) -or (@("consumer","provider") -cnotcontains $o.emitted_by)){ return (& $fail "RECEIPT_BAD_EMITTED_BY") }
+  if(($null -ne $o.contract) -and (($o.contract -isnot [string]) -or ($o.contract -cnotmatch '^[a-z0-9][a-z0-9_.-]*\.v[0-9]+\z'))){ return (& $fail "RECEIPT_BAD_CONTRACT") }
   foreach($n in @("request_sha256","response_sha256")){ $v = $o.$n; if(($null -ne $v) -and (-not (($v -is [string]) -and (Test-NflHex64 $v)))){ return (& $fail ("RECEIPT_BAD_" + $n.ToUpperInvariant())) } }
   if(($o.carried -isnot [System.Array])){ return (& $fail "RECEIPT_BAD_CARRIED") }
   foreach($c in $o.carried){
     if($c -isnot [System.Management.Automation.PSCustomObject]){ return (& $fail "RECEIPT_BAD_CARRIED") }
     if((@($c.PSObject.Properties | ForEach-Object { $_.Name }) -join ",") -ne "contract,sha256"){ return (& $fail "RECEIPT_BAD_CARRIED") }
-    if(($c.contract -isnot [string]) -or ($c.contract -cnotmatch '^[a-z0-9][a-z0-9_.-]*\.v[0-9]+$')){ return (& $fail "RECEIPT_BAD_CARRIED") }
+    if(($c.contract -isnot [string]) -or ($c.contract -cnotmatch '^[a-z0-9][a-z0-9_.-]*\.v[0-9]+\z')){ return (& $fail "RECEIPT_BAD_CARRIED") }
     if(($c.sha256 -isnot [string]) -or -not (Test-NflHex64 $c.sha256)){ return (& $fail "RECEIPT_BAD_CARRIED") }
   }
-  if(@("ok","refused","unavailable","unknown","deferred","failed") -cnotcontains $o.outcome){ return (& $fail "RECEIPT_BAD_OUTCOME") }
+  if(($o.outcome -isnot [string]) -or (@("ok","refused","unavailable","unknown","deferred","failed") -cnotcontains $o.outcome)){ return (& $fail "RECEIPT_BAD_OUTCOME") }
   if($o.outcome -ceq "ok"){ if($null -ne $o.error_token){ return (& $fail "RECEIPT_ERROR_TOKEN_ON_OK") } }
-  else { if(($o.error_token -isnot [string]) -or ($o.error_token -cnotmatch '^[A-Z][A-Z0-9_]*$')){ return (& $fail "RECEIPT_BAD_ERROR_TOKEN") } }
+  else { if(($o.error_token -isnot [string]) -or ($o.error_token -cnotmatch '^[A-Z][A-Z0-9_]*\z')){ return (& $fail "RECEIPT_BAD_ERROR_TOKEN") } }
   if(($o.prev_sha256 -isnot [string]) -or -not (Test-NflHex64 $o.prev_sha256)){ return (& $fail "RECEIPT_BAD_PREV_SHA256") }
   return [pscustomobject]@{ Ok=$true; Error=$null; Sha256=(Get-NflSha256HexOfString $l); Consumer=$o.consumer; Provider=$o.provider; Obj=$o }
 }
@@ -494,8 +543,7 @@ function Write-NflOwnIntegrationReceipt {
       $line = New-NflIntegrationReceiptLine -Consumer "nfl" -Provider $Provider -Contract $Contract -RequestSha256 $RequestSha256 -ResponseSha256 $ResponseSha256 -Carried $Carried -Outcome $Outcome -ErrorToken $ErrorToken -PrevSha256 $prev
       $chk = Test-NflIntegrationReceiptLine $line
       if(-not $chk.Ok){ throw ("NFL_OWN_RECEIPT_INVALID:" + $chk.Error) }
-      $fs = [System.IO.File]::Open($path,[System.IO.FileMode]::Append,[System.IO.FileAccess]::Write,[System.IO.FileShare]::Read)
-      try { $b = (Get-NflUtf8).GetBytes($line + "`n"); $fs.Write($b,0,$b.Length); $fs.Flush($true) } finally { $fs.Dispose() }
+      Add-NflLine $path $line
     } finally { $lock.Dispose() }
     return [pscustomobject]@{ Ok=$true; Path=$path; Sha256=$chk.Sha256; Error=$null }
   } catch {
@@ -504,6 +552,7 @@ function Write-NflOwnIntegrationReceipt {
 }
 
 function Sync-NflOwnIntegrationReceipts([string]$RepoRoot){
+  $integrations = Get-NflRegisteredIntegrations $RepoRoot
   # Witness every receipt NFL emitted as a consumer (idempotent: hash + label already present is skipped).
   $dir = Join-NflPath $RepoRoot "proofs" "receipts" "integration"
   $res = [pscustomobject]@{ Files=0; Lines=0; Witnessed=0; Already=0; Invalid=0 }
@@ -514,7 +563,10 @@ function Sync-NflOwnIntegrationReceipts([string]$RepoRoot){
     foreach($line in @(Read-NflLedgerLines $f.FullName)){
       $res.Lines++
       $chk = Test-NflIntegrationReceiptLine $line
-      if(-not $chk.Ok -or $chk.Obj.prev_sha256 -ne $prev){ $res.Invalid++; $prev = Get-NflSha256HexOfString $line; continue }
+      $fileProvider = $f.Name.Substring(5, $f.Name.Length - 5 - ".ndjson".Length)
+      $bad = (-not $chk.Ok) -or ($chk.Obj.prev_sha256 -ne $prev) -or ($chk.Consumer -ne "nfl") -or ($chk.Provider -ne $fileProvider) -or
+             ($null -eq (Find-NflRegisteredIntegration $integrations "nfl" $chk.Provider))
+      if($bad){ $res.Invalid++; $prev = Get-NflSha256HexOfString $line; continue }
       $prev = $chk.Sha256
       $r = Add-NflLedgerRecord -RepoRoot $RepoRoot -Hash $chk.Sha256 -Artifact (Get-NflReceiptLabel $chk.Consumer $chk.Provider) -IdempotentOnHashArtifact
       if($r.Duplicate){ $res.Already++ } else { $res.Witnessed++ }
@@ -553,15 +605,15 @@ function Test-NflIngestEnvelope($Env){
   $names = @($Env.PSObject.Properties | ForEach-Object { $_.Name })
   foreach($n in $names){ if($allowed -cnotcontains $n){ return ("INGEST_ENVELOPE_UNKNOWN_FIELD:" + $n) } }
   foreach($n in $allowed){ if($names -cnotcontains $n){ return ("INGEST_ENVELOPE_MISSING:" + $n) } }
-  if($Env.schema -cne "nfl.ingest.v1"){ return "INGEST_ENVELOPE_BAD_SCHEMA" }
+  if(($Env.schema -isnot [string]) -or ($Env.schema -cne "nfl.ingest.v1")){ return "INGEST_ENVELOPE_BAD_SCHEMA" }
   foreach($n in @("packet_id","commit_hash")){ $v = $Env.$n; if(($v -isnot [string]) -or -not (Test-NflHex64 $v)){ return ("INGEST_ENVELOPE_BAD_" + $n.ToUpperInvariant()) } }
   $lim = @{ producer=64; producer_instance=128; tenant=128; principal=256; event_type=256; payload_ref=2048; producer_key_id=128; producer_sig_ref=512 }
   foreach($n in $lim.Keys){ $v = $Env.$n; if(($v -isnot [string]) -or $v.Length -lt 1 -or $v.Length -gt $lim[$n]){ return ("INGEST_ENVELOPE_BAD_" + $n.ToUpperInvariant()) } }
-  if($Env.producer -cnotmatch '^[a-z0-9][a-z0-9-]*$'){ return "INGEST_ENVELOPE_PRODUCER_NOT_SERVICE_ID" }
-  if(($Env.event_time_utc -isnot [string]) -or ($Env.event_time_utc -notmatch '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$')){ return "INGEST_ENVELOPE_BAD_EVENT_TIME_UTC" }
+  if(($Env.producer -isnot [string]) -or $Env.producer -cnotmatch '^[a-z0-9][a-z0-9-]*\z'){ return "INGEST_ENVELOPE_PRODUCER_NOT_SERVICE_ID" }
+  if(($Env.event_time_utc -isnot [string]) -or ($Env.event_time_utc -cnotmatch '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]+)?(Z|[+-][0-9]{2}:[0-9]{2})\z')){ return "INGEST_ENVELOPE_BAD_EVENT_TIME_UTC" }
   if($Env.prev_links -isnot [System.Array]){ return "INGEST_ENVELOPE_BAD_PREV_LINKS" }
   foreach($l in $Env.prev_links){ if(($l -isnot [string]) -or -not (Test-NflHex64 $l)){ return "INGEST_ENVELOPE_BAD_PREV_LINKS" } }
-  if(@("pointer_only","inline_sealed","inline_plain") -cnotcontains $Env.payload_mode){ return "INGEST_ENVELOPE_BAD_PAYLOAD_MODE" }
+  if(($Env.payload_mode -isnot [string]) -or (@("pointer_only","inline_sealed","inline_plain") -cnotcontains $Env.payload_mode)){ return "INGEST_ENVELOPE_BAD_PAYLOAD_MODE" }
   return $null
 }
 
@@ -599,8 +651,7 @@ function Add-NflIngestReceipt {
       producer = [string]$Envelope.producer; event_type = [string]$Envelope.event_type; ledger_seq = [int]$Commit.Seq; prev_receipt_sha256 = $prev
     }
     $line = ConvertTo-NflCanonicalJson $row
-    $fs = [System.IO.File]::Open($path,[System.IO.FileMode]::Append,[System.IO.FileAccess]::Write,[System.IO.FileShare]::Read)
-    try { $b = (Get-NflUtf8).GetBytes($line + "`n"); $fs.Write($b,0,$b.Length); $fs.Flush($true) } finally { $fs.Dispose() }
+    Add-NflLine $path $line
     return [pscustomobject]@{ Duplicate=$false; Line=$line; Receipt=(ConvertFrom-NflJson $line) }
   } finally { $lock.Dispose() }
 }

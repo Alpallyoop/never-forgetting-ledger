@@ -46,7 +46,12 @@ Every response is one compact JSON object with `status`:
 
 ## Security model
 
-Local operator API, no authentication. It accepts only requests whose `Host` is the listener's own loopback
-host:port (DNS-rebinding guard) and rejects any request carrying a non-local `Origin` (a web page cannot drive
-`/commit` or `/ingest/control`). `file://` pages send `Origin: null` and are rejected; the desktop explorer
-calls the API from its main process, which sends no `Origin`. Do not expose the API beyond loopback.
+Local operator API, no authentication. It accepts a request only when the remote address is loopback, the
+`Host` header is the listener's own loopback host:port (DNS-rebinding guard), and the request carries no
+`Origin` header, unless that exact origin was passed in `-AllowedOrigins` (by default no web page, on any
+host or port, can drive `/commit` or `/ingest/control`). The desktop explorer calls the API from its main
+process and the dev server from Node, neither of which sends an `Origin`.
+
+`POST /verify {"file":...}` hashes a path on the API's machine and is off unless the API was started with
+`-AllowPathVerify`; even then only local absolute paths to regular files are accepted (no UNC shares, no
+devices). Callers normally hash locally and send `{"sha256":...}`. Do not expose the API beyond loopback.

@@ -93,6 +93,18 @@ $shaBefore = Get-NflSha256File $rf
 $x = Invoke-NflScript $Cli @("witness-receipt","-ReceiptFile",$rf,"-RepoRoot",(Join-NflPath $TmpRoot "no_such_nfl")) $TmpRoot
 Assert "R10_NFL_ABSENT_EMITTER_UNTOUCHED" (($x.ExitCode -ne 0) -and ((Get-NflSha256File $rf) -eq $shaBefore)) ""
 
+$evil = @(
+  @("R13_ARRAY_SCHEMA", $good.Replace('"schema":"constellation.integration.receipt.v1"','"schema":["constellation.integration.receipt.v1"]')),
+  @("R14_ARRAY_OUTCOME", $good.Replace('"outcome":"ok"','"outcome":["ok"]')),
+  @("R15_ARRAY_EMITTED_BY", $good.Replace('"emitted_by":"consumer"','"emitted_by":["consumer"]')),
+  @("R16_TRAILING_NEWLINE_IN_HASH", $good.Replace(('"request_sha256":"' + ("a" * 64) + '"'),('"request_sha256":"' + ("a" * 64) + '\n"')))
+)
+foreach($e in $evil){
+  $before = LedgerCount $r
+  $x = Invoke-TestCli $r @("witness-receipt","-ReceiptLine",$e[1])
+  Assert $e[0] (($x.ExitCode -ne 0) -and ($x.StdOut -match '(?m)^REFUSED') -and ((LedgerCount $r) -eq $before)) (($x.StdOut -split "`n" | Where-Object { $_ -match 'RECEIPT_ERROR' }) -join "")
+}
+
 # NFL's own consumer-side receipts
 $a1 = Write-NflOwnIntegrationReceipt -RepoRoot $r -Provider "cpr" -Contract "cpr.packet.manifest.v1" -RequestSha256 ("c" * 64) -ResponseSha256 ("d" * 64) -Outcome "ok"
 $a2 = Write-NflOwnIntegrationReceipt -RepoRoot $r -Provider "cpr" -Contract "cpr.packet.manifest.v1" -RequestSha256 ("c" * 64) -Outcome "unavailable" -ErrorToken "CPR_VERIFIER_MISSING"
@@ -101,6 +113,18 @@ $chainOk = ($lines.Count -eq 2) -and ((ConvertFrom-NflJson $lines[1]).prev_sha25
 $s1 = Sync-NflOwnIntegrationReceipts $r
 $s2 = Sync-NflOwnIntegrationReceipts $r
 Assert "R11_OWN_RECEIPTS_CHAINED_AND_WITNESSED" ($a1.Ok -and $a2.Ok -and $chainOk -and ($s1.Witnessed -eq 2) -and ($s2.Witnessed -eq 0) -and ($s2.Already -eq 2)) ("sync1=" + $s1.Witnessed + " sync2=" + $s2.Already)
+# torn last line must not swallow the next receipt
+[System.IO.File]::AppendAllText($a1.Path,'{"torn":')
+$a3 = Write-NflOwnIntegrationReceipt -RepoRoot $r -Provider "cpr" -Contract "cpr.packet.manifest.v1" -Outcome "ok"
+$tl = @(Read-NflLedgerLines $a1.Path)
+Assert "R17_TORN_LINE_ISOLATED" ($a3.Ok -and ($tl[$tl.Count-1] -match '^\{"schema":"constellation.integration.receipt.v1"') -and ($tl[$tl.Count-2] -eq '{"torn":')) ""
+# a foreign file in the own-receipt folder is never witnessed
+$rf2 = NewRoot "foreign_own" $true
+$foreignOwn = Join-NflPath $rf2 "proofs" "receipts" "integration" "nfl__zzz.ndjson"
+WriteText $foreignOwn ((New-NflIntegrationReceiptLine -Consumer "evil" -Provider "anything" -Outcome "ok" -PrevSha256 $Z) + "`n")
+$sx = Sync-NflOwnIntegrationReceipts $rf2
+Assert "R18_FOREIGN_OWN_RECEIPT_REFUSED" (((LedgerCount $rf2) -eq 0) -and ($sx.Invalid -ge 1)) ""
+WriteText $a1.Path ($lines[0] + "`n" + $lines[1] + "`n")
 $bad = $lines[0].Replace('"outcome":"ok"','"outcome":"failed"')
 WriteText $a1.Path ($bad + "`n" + $lines[1] + "`n")
 $s3 = Sync-NflOwnIntegrationReceipts $r
@@ -158,6 +182,21 @@ $pEnv = New-Packet $inbox @{ "nfl.ingest.json" = (Envelope "runledger" $commitHa
 $pPlain = New-Packet $inbox @{ "a.txt" = "hello`n" }
 $pApv = New-Packet $inbox @{ "nfl.ingest.json" = (Envelope "apv" ("d" * 64)) }
 $pBadEnv = New-Packet $inbox @{ "nfl.ingest.json" = '{"schema":"nfl.ingest.v1","packet_id":"x"}' }
+# packet whose manifest does not list the envelope (CPR still passes: sha256sums covers every file)
+$ubTmp = Join-NflPath $inbox "_ub"
+New-Item -ItemType Directory -Force -Path (Join-NflPath $ubTmp "payload") | Out-Null
+WriteText (Join-NflPath $ubTmp "payload" "nfl.ingest.json") (Envelope "runledger" ("e" * 64))
+$ubMan = '{"schema":"packet_manifest.v1","note":"lists nothing"}'
+WriteText (Join-NflPath $ubTmp "manifest.json") $ubMan
+$pUnbound = Get-NflSha256HexOfString $ubMan
+WriteText (Join-NflPath $ubTmp "packet_id.txt") ($pUnbound + "`n")
+$ubSums = @(Get-ChildItem -LiteralPath $ubTmp -File -Recurse | ForEach-Object { (Get-NflSha256File $_.FullName) + "  " + ($_.FullName.Substring($ubTmp.Length).TrimStart([char]'\',[char]'/') -replace '\\','/') } | Sort-Object)
+WriteText (Join-NflPath $ubTmp "sha256sums.txt") (($ubSums -join "`n") + "`n")
+Move-Item -LiteralPath $ubTmp -Destination (Join-NflPath $inbox $pUnbound)
+# envelope for runledger dropped in watchtower's outbox
+$wtBox = Join-NflPath $ir "wt_outbox"
+New-Item -ItemType Directory -Force -Path $wtBox | Out-Null
+$pWrongOwner = New-Packet $wtBox @{ "nfl.ingest.json" = (Envelope "runledger" ("f" * 64)) }
 $tamperDir = Join-NflPath $inbox "zz-tampered-copy"
 Copy-Item -LiteralPath (Join-NflPath $inbox $pPlain) -Destination $tamperDir -Recurse
 [System.IO.File]::AppendAllText((Join-NflPath $tamperDir "payload" "a.txt"),"tampered`n")
@@ -171,7 +210,8 @@ WriteText $cfg (ConvertTo-NflCanonicalJson ([ordered]@{ schema="nfl.inbox_regist
   [ordered]@{ name="nfl-raw-files"; path="inbox/raw"; mode="file"; source="local" },
   [ordered]@{ name="nfl-integration-receipts"; path="inbox/receipts"; mode="receipt"; source="local" },
   [ordered]@{ name="foreign-absent"; path="../foreign_repo_absent/outbox"; mode="packet"; integration="watchtower>nfl" },
-  [ordered]@{ name="unregistered"; path="unreg"; mode="packet"; integration="apv>nfl" }
+  [ordered]@{ name="unregistered"; path="unreg"; mode="packet"; integration="apv>nfl" },
+  [ordered]@{ name="watchtower-outbox"; path="wt_outbox"; mode="packet"; integration="watchtower>nfl" }
 ) }))
 
 $x = Invoke-NflScript $Ingest @("-RepoRoot",$ir,"-CprRoot",$cprCopy,"-ConfigPath",$cfg) $ir
@@ -191,6 +231,8 @@ Assert "I6_FILE_INBOX_COMMITTED" (@(Find-NflLedgerRecords $ir (Get-NflSha256File
 Assert "I7_RECEIPT_INBOX_ATTRIBUTION" ((@(Find-NflLedgerRecords $ir (Get-NflSha256HexOfString $good)).Count -eq 1) -and (@(Find-NflLedgerRecords $ir (Get-NflSha256HexOfString $unattr)).Count -eq 0) -and ($out -match 'NFL_INGEST_UNATTRIBUTED nfl-integration-receipts/b.ndjson')) ""
 Assert "I8_FOREIGN_INBOX_UNAVAILABLE_NOT_CREATED" (($out -match 'INBOX foreign-absent unavailable') -and -not (Test-Path -LiteralPath $foreign)) ""
 Assert "I9_UNREGISTERED_INBOX_UNATTRIBUTED" (($out -match 'INBOX unregistered unattributed:INTEGRATION_NOT_REGISTERED') -and ($out -match 'NFL_INGEST_UNATTRIBUTED unregistered/pkt')) ""
+Assert "I14_ENVELOPE_NOT_BOUND_TO_MANIFEST_REFUSED" ((@(StateOf $pUnbound)[0].result -eq "INGEST_ENVELOPE_NOT_BOUND_TO_MANIFEST") -and (@(Find-NflLedgerRecords $ir ("e" * 64)).Count -eq 0)) ([string](@(StateOf $pUnbound)[0].result))
+Assert "I15_PRODUCER_NOT_INBOX_OWNER_REFUSED" ((@(StateOf $pWrongOwner)[0].reason -like "PRODUCER_NOT_INBOX_OWNER*") -and (@(Find-NflLedgerRecords $ir ("f" * 64)).Count -eq 0)) ([string](@(StateOf $pWrongOwner)[0].reason))
 $own = @(Read-NflLedgerLines (Join-NflPath $ir "proofs" "receipts" "integration" "nfl__cpr.ndjson"))
 $ownWitnessed = @($own | Where-Object { @(Find-NflLedgerRecords $ir (Get-NflSha256HexOfString $_)).Count -eq 1 }).Count
 Assert "I10_NFL_CPR_RECEIPTS_WRITTEN_AND_WITNESSED" (($own.Count -ge 4) -and ($ownWitnessed -eq $own.Count) -and (@($own | Where-Object { $_ -match '"outcome":"failed"' }).Count -ge 1)) ("own=" + $own.Count)

@@ -21,7 +21,7 @@ $B = "http://127.0.0.1:" + $port
 
 $psi = New-Object System.Diagnostics.ProcessStartInfo
 $psi.FileName = Get-NflHostExe
-$psi.Arguments = ((@("-NoProfile","-NonInteractive","-ExecutionPolicy","Bypass","-File",(Join-NflPath $PSScriptRoot "nfl_api_v1.ps1"),"-RepoRoot",$T,"-Prefix",($B + "/")) | ForEach-Object { ConvertTo-NflArg $_ }) -join " ")
+$psi.Arguments = ((@("-NoProfile","-NonInteractive","-ExecutionPolicy","Bypass","-File",(Join-NflPath $PSScriptRoot "nfl_api_v1.ps1"),"-RepoRoot",$T,"-Prefix",($B + "/"),"-AllowPathVerify") | ForEach-Object { ConvertTo-NflArg $_ }) -join " ")
 $psi.UseShellExecute = $false; $psi.RedirectStandardOutput = $true; $psi.RedirectStandardError = $true; $psi.CreateNoWindow = $true
 $api = [System.Diagnostics.Process]::Start($psi)
 
@@ -79,8 +79,11 @@ try {
   Assert "A12_INTEGRATIONS" (($ig.Obj.status -eq "OK") -and ($ig.Obj.count -ge 10)) ("count=" + $ig.Obj.count)
   $ev = Call "POST" "/commit" ('{"hash":"' + ("b" * 64) + '"}') @{ Origin = "http://evil.example" }
   Assert "A13_FOREIGN_ORIGIN_403" (($ev.Code -eq 403) -and (@(Find-NflLedgerRecords $T ("b" * 64)).Count -eq 0)) ""
-  $lo = Call "GET" "/health" $null @{ Origin = "http://localhost:5173" }
-  Assert "A14_LOCAL_ORIGIN_ALLOWED" ($lo.Code -eq 200) ""
+  $lo = Call "POST" "/commit" ('{"hash":"' + ("b" * 64) + '"}') @{ Origin = "http://localhost:5173" }
+  Assert "A14_ANY_BROWSER_ORIGIN_REFUSED_BY_DEFAULT" (($lo.Code -eq 403) -and (@(Find-NflLedgerRecords $T ("b" * 64)).Count -eq 0)) ""
+  $dv = Call "POST" "/verify" '{"file":"/dev/zero"}' $null
+  $dv2 = Call "POST" "/verify" '{"file":"\\\\server\\share\\x"}' $null
+  Assert "A19_VERIFY_PATH_DEVICE_AND_UNC_REFUSED" (($dv.Code -eq 400) -and ($dv2.Code -eq 400) -and ($dv2.Obj.message -eq "PATH_NOT_LOCAL_ABSOLUTE")) ($dv.Text + $dv2.Text)
   $nf = Call "GET" "/nope" $null $null
   Assert "A15_UNKNOWN_ROUTE_404" ($nf.Code -eq 404) ""
   $big = Call "POST" "/commit" ('{"hash":"' + ("c" * 64) + '","artifact":"' + ("x" * 1100000) + '"}') $null

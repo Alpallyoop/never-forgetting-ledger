@@ -3,8 +3,8 @@
   (Windows or Linux). Fail-closed; each stage must exit 0 AND print its OK token. Temp folders only; the
   real ledger is read (verify-chain), never written. No scheduler, no git, no network.
 
-    parse gate (all operational scripts)       selfchain 4/4      checkpoint 5/5     seal 9/9
-    receipts + ingest 29/29 (needs CPR)        API 18/18          portable export 9/9 (python3/python)
+    parse gate (all operational scripts)       selfchain 6/6      checkpoint 5/5     seal 9/9
+    receipts + ingest 37/37 (needs CPR)        API 19/19          portable export 9/9 (python3/python)
     real ledger: embedded chain verifies
 
   -CprRoot / NFL_CPR_ROOT locate CPR; otherwise the sibling ../cpr is used. Emits NFL_SELFTESTS_ALL_OK.

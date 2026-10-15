@@ -7,6 +7,9 @@
     { "name": "watchtower-outbox", "path": "../watchtower/packets/outbox", "mode": "packet", "integration": "watchtower>nfl" },
     { "name": "covenant-gate-outbox", "path": "../covenant-gate/outbox", "mode": "packet", "integration": "covenant-gate>nfl" },
     { "name": "neverlost-outbox", "path": "../neverlost/outbox", "mode": "packet", "integration": "nfl>neverlost", "note": "NFL is the consumer here: it writes an nfl>neverlost integration receipt per packet read." },
-    { "name": "pie-outbox", "path": "../../_Aion-Systems/pie/outbox", "mode": "packet", "integration": "pie>nfl" }
+    { "name": "pie-outbox", "path": "../../_Aion-Systems/pie/outbox", "mode": "packet", "integration": "pie>nfl" },
+    { "name": "echo-transport-outbox", "path": "../echo-transport/packets/outbox_nfl", "mode": "packet", "integration": "echo-transport>nfl", "note": "Added by Constellation 2026-10-15 (proposal 0015; Echo Transport proposal 0001)." },
+    { "name": "courier-covenant-gate-receipts", "path": "../covenant-courier/proofs/integration_receipts/covenant-courier__covenant-gate", "mode": "receipt", "integration": "covenant-courier>covenant-gate", "note": "Added by Constellation 2026-10-15 (Courier proposal 0001)." },
+    { "name": "courier-neverlost-receipts", "path": "../covenant-courier/proofs/integration_receipts/covenant-courier__neverlost", "mode": "receipt", "integration": "covenant-courier>neverlost", "note": "Added by Constellation 2026-10-15 (Courier proposal 0001)." }
   ]
 }

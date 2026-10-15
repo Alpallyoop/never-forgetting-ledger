@@ -2,21 +2,56 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "nfl.ledger.record.v1",
   "title": "nfl.ledger.record.v1 - one line of data/ledger.ndjson",
-  "description": "Append-only. Core = hash, artifact, timestamp. Record hash = SHA-256 of the compact core {\"hash\":..,\"artifact\":..,\"timestamp\":..} (nfl.ledger.core.canon.v1, keys in that order, RFC 8259 minimal escaping). seq is the 0-based line index; prev is the record hash of the previous line or GENESIS for line 0. Lines written before self-chaining (2026-10) have no seq/prev and form an unchained prefix. Optional string fields: schema (nfl.ledger.commit.v2 from the API), source_repo, source_repo_path, branch, commit_hash, remote, event_type. Artifact labels in use: free text (operator commits), 'constellation.integration.receipt.v1:<consumer>><provider>' (integration receipts), 'nfl.ingest.v1:<producer>:<packet_id>' (ingested envelopes), 'packet:<source>:<inbox>' (verified packets without an envelope).",
+  "description": "Append-only. Core = hash, artifact, timestamp. Record hash = SHA-256 of the compact core {\"hash\":..,\"artifact\":..,\"timestamp\":..} (nfl.ledger.core.canon.v1, keys in that order, RFC 8259 minimal escaping). seq is the 0-based line index; prev is the link hash of the previous line or GENESIS for line 0, where link = record hash for a line without prev, else SHA-256(\"nfl.ledger.selfchain.v1\\n\" + prev + \"\\n\" + record hash) (nfl.ledger.selfchain.v1). data/ledger.selfchain.json pins chain_start_seq, the first chained line. Lines written before self-chaining (2026-10) have no seq/prev and form an unchained prefix. Optional string fields: schema (nfl.ledger.commit.v2 from the API), source_repo, source_repo_path, branch, commit_hash, remote, event_type. Artifact labels in use: free text (operator commits), 'constellation.integration.receipt.v1:<consumer>><provider>' (integration receipts), 'nfl.ingest.v1:<producer>:<packet_id>' (ingested envelopes), 'packet:<source>:<inbox>' (verified packets without an envelope).",
   "type": "object",
-  "required": ["hash","artifact","timestamp"],
+  "required": [
+    "hash",
+    "artifact",
+    "timestamp"
+  ],
   "properties": {
-    "hash": { "type": "string" },
-    "artifact": { "type": ["string","null"], "maxLength": 1024 },
-    "timestamp": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$" },
-    "seq": { "type": "integer", "minimum": 0 },
-    "prev": { "type": "string", "pattern": "^(GENESIS|[a-f0-9]{64})$" },
-    "schema": { "type": "string" },
-    "source_repo": { "type": "string" },
-    "source_repo_path": { "type": "string" },
-    "branch": { "type": "string" },
-    "commit_hash": { "type": "string" },
-    "remote": { "type": "string" },
-    "event_type": { "type": "string" }
+    "hash": {
+      "type": "string"
+    },
+    "artifact": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 1024
+    },
+    "timestamp": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+    },
+    "seq": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "prev": {
+      "type": "string",
+      "pattern": "^(GENESIS|[a-f0-9]{64})$"
+    },
+    "schema": {
+      "type": "string"
+    },
+    "source_repo": {
+      "type": "string"
+    },
+    "source_repo_path": {
+      "type": "string"
+    },
+    "branch": {
+      "type": "string"
+    },
+    "commit_hash": {
+      "type": "string"
+    },
+    "remote": {
+      "type": "string"
+    },
+    "event_type": {
+      "type": "string"
+    }
   }
 }
