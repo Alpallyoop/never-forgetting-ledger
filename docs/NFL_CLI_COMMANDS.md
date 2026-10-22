@@ -11,6 +11,7 @@ pass the same commands through with the repository as root.
 | `verify-chain` | | `NFL_LEDGER_CHAIN_OK`, `COUNT=`, `UNCHAINED_PREFIX=`, `CHAINED_COUNT=`, `HEAD=` | `NFL_LEDGER_CHAIN_FAIL:CHAIN_BREAK:<i>` / `SEQ_MISMATCH` / `UNCHAINED_AFTER_CHAIN` / `BAD_JSON_LINE` (exit 1) |
 | `witness-receipt` | `-ReceiptFile <ndjson>` or `-ReceiptLine <json>` | per line `WITNESSED` / `ALREADY_WITNESSED` + `RECEIPT_SHA256=`, `INTEGRATION=`, `SEQ=`; then `NFL_RECEIPT_WITNESS_OK` | per line `REFUSED` + `RECEIPT_ERROR=`; then `NFL_CLI_FAIL:RECEIPT_REFUSED:<n>` (exit 1) |
 | `verify-receipt` | `-ReceiptFile` or `-ReceiptLine` | per line `RECEIPT_SHA256=` + `VERIFIED`/`NOT_FOUND`; `NOT_FOUND_COUNT=` | |
+| `receipt-head` | `-Integration <consumer>><provider>` | `INTEGRATION=`, `WITNESSED_COUNT=`, `HEAD=` (newest witnessed receipt hash; 64 zeros when none), `LAST_SEQ=`, then `NFL_RECEIPT_HEAD_OK`. Read-only (proposal 0003) | `NFL_CLI_FAIL:MISSING_INTEGRATION`, `RECEIPT_HEAD_BAD_INTEGRATION` |
 | `witness-own-receipts` | | `WITNESSED=`, `ALREADY=`, `INVALID=`, `NFL_OWN_RECEIPTS_OK` | `NFL_CLI_FAIL:OWN_RECEIPTS_INVALID:<n>` |
 
 Receipt refusal tokens: `RECEIPT_BAD_JSON`, `RECEIPT_NOT_ONE_LINE`, `RECEIPT_KEYS_NOT_CANONICAL`,

@@ -576,6 +576,21 @@ function Sync-NflOwnIntegrationReceipts([string]$RepoRoot){
 }
 
 # ---- witnessing one integration receipt line (shared by CLI, API, ingest) -------------------
+# Read-only: what NFL has witnessed for one registered integration (NFL proposal 0003). Records are those committed with the
+# artifact label "constellation.integration.receipt.v1:<consumer>><provider>", in ledger order. Count = how many; Head = the hash
+# of the most recent one (64 zeros when none). An emitter compares Head with its own receipt file: Head must still be one of its
+# lines, so a rewritten, removed or replaced witnessed receipt is caught even when the emitter's local files were both changed.
+function Get-NflReceiptHead([string]$RepoRoot,[string]$Consumer,[string]$Provider){
+  if($Consumer -cnotmatch '^[a-z0-9][a-z0-9-]*\z' -or $Provider -cnotmatch '^[a-z0-9][a-z0-9-]*\z'){ throw "NFL_RECEIPT_HEAD_BAD_INTEGRATION" }
+  $label = Get-NflReceiptLabel $Consumer $Provider
+  $records = @(Read-NflLedgerRecords (Get-NflLedgerPath $RepoRoot))
+  $count = 0; $head = ("0" * 64); $seq = -1
+  for($i=0; $i -lt $records.Count; $i++){
+    if([string](Get-NflProp $records[$i] 'artifact') -ceq $label){ $count++; $head = [string](Get-NflProp $records[$i] 'hash'); $seq = $i }
+  }
+  return [pscustomobject]@{ Integration=($Consumer + ">" + $Provider); Count=$count; Head=$head; LastSeq=$seq }
+}
+
 function Invoke-NflWitnessReceiptLine([string]$RepoRoot,[string]$Line,$Integrations){
   # Fail closed: only a valid receipt of a registered integration whose witness is nfl is committed
   # (shared invariant: "a witness only commits hashes that belong to a registered integration").

@@ -11,6 +11,8 @@
                     REFUSED  RECEIPT_ERROR=<token>  (invalid, unregistered, wrong witness/emitter)
                   ends with NFL_RECEIPT_WITNESS_OK (exit 0) or NFL_CLI_FAIL:RECEIPT_REFUSED:<n> (exit 1)
   verify-receipt  -ReceiptFile | -ReceiptLine              -> per line VERIFIED SEQ= TIMESTAMP= | NOT_FOUND ; RECEIPT_SHA256=
+  receipt-head    -Integration <consumer>><provider>        -> read-only (proposal 0003): INTEGRATION= WITNESSED_COUNT= HEAD= LAST_SEQ=
+                  then NFL_RECEIPT_HEAD_OK; HEAD is the most recent witnessed receipt hash (64 zeros when none)
   witness-own-receipts                                     -> commits the receipts NFL wrote as a consumer
                   (proofs/receipts/integration/nfl__*.ndjson): NFL_OWN_RECEIPTS_OK WITNESSED= ALREADY= INVALID=
 
@@ -19,7 +21,7 @@
 #>
 param(
   [Parameter(Mandatory=$true,Position=0)]
-  [ValidateSet("commit","lookup","verify","verify-chain","witness-receipt","verify-receipt","witness-own-receipts")]
+  [ValidateSet("commit","lookup","verify","verify-chain","witness-receipt","verify-receipt","witness-own-receipts","receipt-head")]
   [string]$Command,
 
   [string]$Hash,
@@ -27,6 +29,7 @@ param(
   [string]$File,
   [string]$ReceiptFile,
   [string]$ReceiptLine,
+  [string]$Integration,
   [string]$RepoRoot = "."
 )
 
@@ -138,6 +141,19 @@ try {
     Write-Output ("INVALID=" + $r.Invalid)
     if($r.Invalid -gt 0){ Write-Output ("NFL_CLI_FAIL:OWN_RECEIPTS_INVALID:" + $r.Invalid); exit 1 }
     Write-Output "NFL_OWN_RECEIPTS_OK"
+    exit 0
+  }
+
+  if($Command -eq "receipt-head"){
+    if([string]::IsNullOrWhiteSpace($Integration)){ Fail "MISSING_INTEGRATION" }
+    $parts = $Integration.Trim().Split(">")
+    if($parts.Count -ne 2){ Fail "RECEIPT_HEAD_BAD_INTEGRATION" }
+    $h = Get-NflReceiptHead $RepoRoot $parts[0] $parts[1]
+    Write-Output ("INTEGRATION=" + $h.Integration)
+    Write-Output ("WITNESSED_COUNT=" + $h.Count)
+    Write-Output ("HEAD=" + $h.Head)
+    Write-Output ("LAST_SEQ=" + $h.LastSeq)
+    Write-Output "NFL_RECEIPT_HEAD_OK"
     exit 0
   }
 

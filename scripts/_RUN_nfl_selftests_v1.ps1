@@ -5,6 +5,7 @@
 
     parse gate (all operational scripts)       selfchain 6/6      checkpoint 5/5     seal 9/9
     receipts + ingest 37/37 (needs CPR)        API 19/19          portable export 9/9 (python3/python)
+    receipt-head 9/9 (proposal 0003)
     real ledger: embedded chain verifies
 
   -CprRoot / NFL_CPR_ROOT locate CPR; otherwise the sibling ../cpr is used. Emits NFL_SELFTESTS_ALL_OK.
@@ -24,7 +25,7 @@ $canon = @("_lib_nfl_v1.ps1","_nfl_paths_v1.ps1","nfl_cli_v1.ps1","nfl_api_v1.ps
   "nfl_witness_cpr_verify_v1.ps1","nfl_ledger_checkpoint_v1.ps1","nfl_ledger_seal_v1.ps1","nfl_ledger_verify_chain_v1.ps1","nfl_ledger_export_v1.ps1",
   "nfl_export_ledger_packet_v1.ps1","nfl_sign_ledger_packet_v1.ps1","nfl_install_ingest_task_v1.ps1","nfl_ops_launch_v1.ps1","nfl.ps1",
   "_selftest_nfl_ledger_selfchain_v1.ps1","_selftest_nfl_ledger_checkpoint_v1.ps1","_selftest_nfl_ledger_seal_v1.ps1",
-  "_selftest_nfl_receipts_ingest_v1.ps1","_selftest_nfl_api_v1.ps1","_RUN_nfl_durable_ledger_green_v1.ps1","_RUN_nfl_apply_all_v1.ps1")
+  "_selftest_nfl_receipts_ingest_v1.ps1","_selftest_nfl_receipt_head_v1.ps1","_selftest_nfl_api_v1.ps1","_RUN_nfl_durable_ledger_green_v1.ps1","_RUN_nfl_apply_all_v1.ps1")
 foreach($f in $canon){
   $p = Join-NflPath $S $f
   if(-not (Test-Path -LiteralPath $p -PathType Leaf)){ Fail ("PARSEGATE_MISSING:" + $f) }
@@ -38,7 +39,8 @@ $stages = @(
   @{ n="SELFCHAIN";  f="_selftest_nfl_ledger_selfchain_v1.ps1";  a=@("-RepoRoot",$RepoRoot); t="NFL_LEDGER_SELFCHAIN_SELFTEST_OK" },
   @{ n="CHECKPOINT"; f="_selftest_nfl_ledger_checkpoint_v1.ps1"; a=@("-RepoRoot",$RepoRoot); t="NFL_LEDGER_SELFTEST_OK" },
   @{ n="SEAL";       f="_selftest_nfl_ledger_seal_v1.ps1";       a=@("-RepoRoot",$RepoRoot); t="NFL_LEDGER_SEAL_SELFTEST_OK" },
-  @{ n="API";        f="_selftest_nfl_api_v1.ps1";               a=@("-RepoRoot",$RepoRoot); t="NFL_API_SELFTEST_OK" }
+  @{ n="API";        f="_selftest_nfl_api_v1.ps1";               a=@("-RepoRoot",$RepoRoot); t="NFL_API_SELFTEST_OK" },
+  @{ n="RECEIPT_HEAD"; f="_selftest_nfl_receipt_head_v1.ps1";    a=@("-RepoRoot",$RepoRoot); t="NFL_RECEIPT_HEAD_SELFTEST_OK" }
 )
 $cpr = Resolve-NflCprRoot $RepoRoot $CprRoot
 if($null -eq $cpr){ Fail "CPR_NOT_FOUND (receipts+ingest selftest needs CPR; set NFL_CPR_ROOT or -CprRoot)" }
