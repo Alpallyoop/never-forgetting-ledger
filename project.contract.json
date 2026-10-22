@@ -1,6 +1,6 @@
 {
   "project_id": "nfl",
-  "canonical_name": "nfl",
+  "canonical_name": "Never Forgetting Ledger",
   "ecosystem": {
     "registry_schema": "constellation.service.registry.v1",
     "service_id": "nfl",
@@ -11,9 +11,26 @@
     "layer": "foundation.hash-ledger",
     "role": "Never Forgetting Ledger: permanent integrity ledger for cryptographic hashes.",
     "standalone_first": true,
-    "upstream_services": [],
-    "downstream_users": [],
-    "contract_families": [],
+    "upstream_services": [
+      "neverlost"
+    ],
+    "downstream_users": [
+      "anchormark",
+      "archive-recall",
+      "atlas-update",
+      "clarity",
+      "contract-registry",
+      "legacy-doctor",
+      "live-state-surgeon",
+      "packetpuncture",
+      "runledger",
+      "bountygate"
+    ],
+    "contract_families": [
+      "nfl.ingest",
+      "nfl.receipt",
+      "nfl.ledger"
+    ],
     "service_map_path": ".constellation/SERVICE_MAP.md",
     "registry_path": ".constellation/registry.json",
     "integration_doc_path": "docs/canonical/ECOSYSTEM_INTEGRATION.md"
